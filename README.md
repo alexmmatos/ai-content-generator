@@ -10,16 +10,21 @@ Minio (S3-compatível).
 ```bash
 cp .env.example .env
 docker-compose up --build
-docker compose exec api npx prisma migrate deploy
 ```
 
 A API sobe em `http://localhost:3000`. O `docker-compose up` também sobe o worker, o
 Postgres, o Redis e o Minio — não é preciso ter Node instalado no host, nem rodar `npm
 install` fora do container.
 
-Migrations não rodam automaticamente no startup; o segundo comando aplica as migrations já
-existentes (`prisma/migrations/`) rodando de dentro do próprio container `api`, contra o
-Postgres interno do compose.
+O container `api` aplica as migrations (`prisma migrate deploy`) e roda o seed
+(`prisma db seed`) automaticamente antes de subir o servidor. O seed cria um usuário de teste
+com 10 créditos; o `userId` gerado aparece no log do container:
+
+```bash
+docker compose logs api | grep "Seed:"
+```
+
+Use esse `userId` para testar `POST /api/content/generate`.
 
 ## Documentação
 
