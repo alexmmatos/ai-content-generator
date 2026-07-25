@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import type { Queue } from "bullmq";
 import { ContentGenerationService } from "./content-generation.service.js";
 import type { GenerateContentJobData } from "./content-generation.service.js";
-import { InsufficientCreditsError } from "./errors.js";
+import { InsufficientCreditsError, UserNotFoundError } from "./errors.js";
 import { FakeUserRepository, FakeContentRepository, FakeQueue, makeUser } from "../test-utils/fakes.js";
 
 function buildService() {
@@ -24,6 +24,15 @@ describe("ContentGenerationService.generate", () => {
 
     await expect(service.generate({ userId: "user-1", topic: "gatos" })).rejects.toThrow(
       InsufficientCreditsError
+    );
+    expect(await contents.findById("content-1")).toBeNull();
+  });
+
+  it("rejects with UserNotFoundError (not InsufficientCreditsError) when the user doesn't exist", async () => {
+    const { contents, service } = buildService();
+
+    await expect(service.generate({ userId: "missing-user", topic: "gatos" })).rejects.toThrow(
+      UserNotFoundError
     );
     expect(await contents.findById("content-1")).toBeNull();
   });

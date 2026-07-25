@@ -46,6 +46,19 @@ describe("POST /api/content/generate", () => {
     expect(response.statusCode).toBe(402);
     expect(response.json()).toEqual({ error: "Insufficient credits" });
   });
+
+  it("returns 404 when the user doesn't exist", async () => {
+    const { app } = buildTestApp();
+
+    const response = await app.inject({
+      method: "POST",
+      url: "/api/content/generate",
+      payload: { topic: "gatos", userId: "33333333-3333-3333-3333-333333333333" },
+    });
+
+    expect(response.statusCode).toBe(404);
+    expect(response.json()).toEqual({ error: "User not found" });
+  });
 });
 
 describe("GET /api/content/:id", () => {

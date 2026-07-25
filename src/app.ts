@@ -8,7 +8,11 @@ import {
   type ZodTypeProvider,
 } from "fastify-type-provider-zod";
 import { createContentRoutes, type ContentRoutesDependencies } from "./routes/content.routes.js";
-import { InsufficientCreditsError, ContentNotFoundError } from "./services/errors.js";
+import {
+  InsufficientCreditsError,
+  ContentNotFoundError,
+  UserNotFoundError,
+} from "./services/errors.js";
 
 export type AppDependencies = ContentRoutesDependencies;
 
@@ -36,6 +40,9 @@ export function buildApp(deps: AppDependencies): FastifyInstance {
     }
     if (error instanceof ContentNotFoundError) {
       return reply.code(404).send({ error: "Content not found" });
+    }
+    if (error instanceof UserNotFoundError) {
+      return reply.code(404).send({ error: "User not found" });
     }
     if (error.code === "FST_ERR_VALIDATION") {
       // fastify-type-provider-zod throws the raw ZodError (statusCode 400, code
