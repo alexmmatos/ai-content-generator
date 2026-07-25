@@ -1,7 +1,10 @@
 import Fastify, { type FastifyInstance } from "fastify";
+import swagger from "@fastify/swagger";
+import swaggerUi from "@fastify/swagger-ui";
 import {
   serializerCompiler,
   validatorCompiler,
+  jsonSchemaTransform,
   type ZodTypeProvider,
 } from "fastify-type-provider-zod";
 import { createContentRoutes, type ContentRoutesDependencies } from "./routes/content.routes.js";
@@ -14,6 +17,14 @@ export function buildApp(deps: AppDependencies): FastifyInstance {
 
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
+
+  app.register(swagger, {
+    openapi: {
+      info: { title: "AI Content Generator API", version: "1.0.0" },
+    },
+    transform: jsonSchemaTransform,
+  });
+  app.register(swaggerUi, { routePrefix: "/docs" });
 
   app.get("/health", async () => ({ status: "ok" }));
 
