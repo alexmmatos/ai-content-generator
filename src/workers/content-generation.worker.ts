@@ -6,6 +6,7 @@ import { PrismaContentRepository } from "../repositories/content.repository.js";
 import { ContentStatusService } from "../services/content-status.service.js";
 import type { GenerateContentJobData } from "../services/content-generation.service.js";
 import { simulateAiCall } from "./simulate-ai-call.js";
+import { shouldMarkFailed } from "./should-mark-failed.js";
 
 const statusService = new ContentStatusService(new PrismaContentRepository());
 
@@ -35,8 +36,6 @@ export const contentGenerationWorker = new Worker<GenerateContentJobData>(
 );
 
 contentGenerationWorker.on("failed", async (job) => {
-  if (!job) return;
-  const maxAttempts = job.opts.attempts ?? 1;
-  if (job.attemptsMade < maxAttempts) return; // will retry again
+  if (!job || !shouldMarkFailed(job)) return; // still has retries left
   await statusService.markFailed(job.data.contentId);
 });
