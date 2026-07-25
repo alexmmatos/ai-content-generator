@@ -2,6 +2,7 @@
   "name": "ai-content-generator",
   "version": "1.0.0",
   "description": "API para geração de conteúdo com IA em background, com filas, resiliência e controle de créditos",
+  "type": "module",
   "main": "dist/server.js",
   "engines": {
     "node": ">=20"
