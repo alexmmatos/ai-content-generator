@@ -5,6 +5,7 @@ import {
   ContentIdParamSchema,
   ContentResponseSchema,
   CancelContentResponseSchema,
+  ErrorResponseSchema,
 } from "../schemas/content.schema.js";
 import type { ContentGenerationService } from "../services/content-generation.service.js";
 import type { ContentStatusService } from "../services/content-status.service.js";
@@ -21,7 +22,12 @@ export function createContentRoutes(deps: ContentRoutesDependencies): FastifyPlu
       {
         schema: {
           body: GenerateContentRequestSchema,
-          response: { 201: GenerateContentResponseSchema },
+          response: {
+            201: GenerateContentResponseSchema,
+            400: ErrorResponseSchema,
+            402: ErrorResponseSchema,
+            404: ErrorResponseSchema,
+          },
         },
       },
       async (request, reply) => {
@@ -35,7 +41,11 @@ export function createContentRoutes(deps: ContentRoutesDependencies): FastifyPlu
       {
         schema: {
           params: ContentIdParamSchema,
-          response: { 200: ContentResponseSchema },
+          response: {
+            200: ContentResponseSchema,
+            400: ErrorResponseSchema,
+            404: ErrorResponseSchema,
+          },
         },
       },
       async (request) => {
@@ -57,7 +67,11 @@ export function createContentRoutes(deps: ContentRoutesDependencies): FastifyPlu
       {
         schema: {
           params: ContentIdParamSchema,
-          response: { 200: CancelContentResponseSchema },
+          response: {
+            200: CancelContentResponseSchema,
+            400: ErrorResponseSchema,
+            404: ErrorResponseSchema,
+          },
         },
       },
       async (request) => {

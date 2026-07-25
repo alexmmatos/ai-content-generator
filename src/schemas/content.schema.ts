@@ -44,5 +44,6 @@ export type CancelContentResponse = z.infer<typeof CancelContentResponseSchema>;
 
 export const ErrorResponseSchema = z.object({
   error: z.string(),
+  details: z.string().optional(),
 });
 export type ErrorResponse = z.infer<typeof ErrorResponseSchema>;
