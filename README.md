@@ -49,6 +49,16 @@ Cobre as duas garantias centrais do desafio: débito de crédito sem duplicaçã
 concorrência, e um conteúdo cancelado que nunca volta a `COMPLETED` — inclusive o caso de
 retry do BullMQ após a falha simulada da IA (~20% de chance por tentativa).
 
+```bash
+docker-compose up -d postgres   # precisa de um Postgres real de pé
+npm run test:integration
+```
+
+Teste de integração à parte (não roda no `npm test` padrão): dispara `decrementCredits`
+concorrente de verdade contra o Postgres do compose, provando a atomicidade do `UPDATE`
+condicional — os testes com repositório fake em memória provam a lógica do serviço, mas não
+uma corrida real entre conexões.
+
 ## Decisões arquiteturais
 
 **Crédito (concorrência).** O débito de crédito é uma única query condicional —
