@@ -1,15 +1,15 @@
-import type { User } from "@prisma/client";
+import type { UserEntity } from "../domain/user.js";
 import type { UserRepository } from "../types/user-repository.interface.js";
 
 export class FakeUserRepository implements UserRepository {
-  private users = new Map<string, User>();
+  private users = new Map<string, UserEntity>();
 
-  seed(user: User): this {
+  seed(user: UserEntity): this {
     this.users.set(user.id, user);
     return this;
   }
 
-  async findById(id: string): Promise<User | null> {
+  async findById(id: string): Promise<UserEntity | null> {
     return this.users.get(id) ?? null;
   }
 

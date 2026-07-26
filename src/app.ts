@@ -18,9 +18,16 @@ import { RequestIdConflictError } from "./services/request-id-conflict.error.js"
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-export function buildApp(deps: AppDependencies): FastifyInstance {
+interface BuildAppOptions {
+  logger?: boolean;
+}
+
+export function buildApp(
+  deps: AppDependencies,
+  options: BuildAppOptions = {}
+): FastifyInstance {
   const app = Fastify({
-    logger: true,
+    logger: options.logger ?? true,
     requestIdHeader: false,
     genReqId(rawRequest) {
       const received = rawRequest.headers["request-id"];

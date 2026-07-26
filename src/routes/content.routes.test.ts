@@ -8,15 +8,18 @@ import { FakeGenerationRequestRepository } from "../test-utils/fake-generation-r
 import { makeUser } from "../test-utils/make-user.js";
 import { makeContent } from "../test-utils/make-content.js";
 
-function buildTestApp() {
+function buildTestApp(options: { logger?: boolean } = { logger: false }) {
   const users = new FakeUserRepository();
   const contents = new FakeContentRepository();
   const requests = new FakeGenerationRequestRepository(users, contents);
 
-  const app = buildApp({
-    contentGenerationService: new ContentGenerationService(requests),
-    contentStatusService: new ContentStatusService(contents),
-  });
+  const app = buildApp(
+    {
+      contentGenerationService: new ContentGenerationService(requests),
+      contentStatusService: new ContentStatusService(contents),
+    },
+    options
+  );
 
   return { app, users, contents, requests };
 }
@@ -96,6 +99,36 @@ describe("POST /api/content/generate", () => {
     expect(replay.headers["request-replayed"]).toBe("true");
     expect((await users.findById(USER_ID))?.credits).toBe(1);
   });
+
+  it.each(["PROCESSING", "COMPLETED", "CANCELED", "FAILED"] as const)(
+    "returns the persisted %s status on a late HTTP replay",
+    async (status) => {
+      const { app, users, contents } = buildTestApp();
+      users.seed(makeUser({ id: USER_ID, credits: 2 }));
+      const requestId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+      const request = {
+        method: "POST" as const,
+        url: "/api/content/generate",
+        headers: { "request-id": requestId },
+        payload: { topic: "gatos", userId: USER_ID },
+      };
+      const first = await app.inject(request);
+      const contentId = first.json().contentId as string;
+      await contents.updateStatusIf(contentId, ["PENDING", "PROCESSING"], {
+        status,
+        ...(status === "COMPLETED"
+          ? { resultUrl: "http://minio/content/result.txt" }
+          : {}),
+      });
+
+      const replay = await app.inject(request);
+
+      expect(replay.statusCode).toBe(201);
+      expect(replay.headers["request-replayed"]).toBe("true");
+      expect(replay.json()).toMatchObject({ contentId, requestId, status });
+      expect((await users.findById(USER_ID))?.credits).toBe(1);
+    }
+  );
 
   it("returns 409 when a request-id is reused with another payload", async () => {
     const { app, users } = buildTestApp();
@@ -295,7 +328,11 @@ describe("POST /api/content/:id/cancel", () => {
     });
 
     expect(response.statusCode).toBe(200);
-    expect(response.json()).toEqual({ id: CONTENT_ID, status: "CANCELED" });
+    expect(response.json()).toEqual({
+      id: CONTENT_ID,
+      status: "CANCELED",
+      canceled: true,
+    });
   });
 
   it("is idempotent over HTTP", async () => {
@@ -313,7 +350,16 @@ describe("POST /api/content/:id/cancel", () => {
 
     expect(first.statusCode).toBe(200);
     expect(second.statusCode).toBe(200);
-    expect(second.json()).toEqual({ id: CONTENT_ID, status: "CANCELED" });
+    expect(first.json()).toEqual({
+      id: CONTENT_ID,
+      status: "CANCELED",
+      canceled: true,
+    });
+    expect(second.json()).toEqual({
+      id: CONTENT_ID,
+      status: "CANCELED",
+      canceled: false,
+    });
   });
 
   it("returns 404 for an unknown content id", async () => {
@@ -345,7 +391,11 @@ describe("POST /api/content/:id/cancel", () => {
     });
 
     expect(response.statusCode).toBe(200);
-    expect(response.json()).toEqual({ id: CONTENT_ID, status: "COMPLETED" });
+    expect(response.json()).toEqual({
+      id: CONTENT_ID,
+      status: "COMPLETED",
+      canceled: false,
+    });
   });
 
   it("returns 400 for an invalid content id", async () => {
@@ -361,6 +411,14 @@ describe("POST /api/content/:id/cancel", () => {
 });
 
 describe("application endpoints", () => {
+  it("keeps application logging enabled by default", async () => {
+    const { app } = buildTestApp({});
+
+    expect(app.log.level).toBe("info");
+
+    await app.close();
+  });
+
   it("returns the health status", async () => {
     const { app } = buildTestApp();
 
@@ -377,5 +435,19 @@ describe("application endpoints", () => {
 
     expect(response.statusCode).toBe(200);
     expect(response.headers["content-type"]).toContain("text/html");
+  });
+
+  it("documents generic 500 responses for every content operation", async () => {
+    const { app } = buildTestApp();
+
+    const response = await app.inject({ method: "GET", url: "/docs/json" });
+    const document = response.json();
+
+    expect(response.statusCode).toBe(200);
+    expect(document.paths["/api/content/generate"].post.responses["500"]).toBeDefined();
+    expect(document.paths["/api/content/{id}"].get.responses["500"]).toBeDefined();
+    expect(
+      document.paths["/api/content/{id}/cancel"].post.responses["500"]
+    ).toBeDefined();
   });
 });

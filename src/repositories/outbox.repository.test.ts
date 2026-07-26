@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const prismaMock = vi.hoisted(() => ({
   outboxEvent: {
     findMany: vi.fn(),
+    findFirst: vi.fn(),
     update: vi.fn(),
   },
 }));
@@ -20,8 +21,10 @@ describe("PrismaOutboxRepository", () => {
     const events = [
       {
         id: "event-1",
+        type: "CONTENT_GENERATION_REQUESTED",
         aggregateId: "content-1",
         requestId: "request-1",
+        payload: {},
       },
     ];
     prismaMock.outboxEvent.findMany.mockResolvedValue(events);
@@ -35,8 +38,10 @@ describe("PrismaOutboxRepository", () => {
       take: 25,
       select: {
         id: true,
+        type: true,
         aggregateId: true,
         requestId: true,
+        payload: true,
       },
     });
   });

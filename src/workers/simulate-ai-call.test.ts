@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { simulateAiCall } from "./simulate-ai-call.js";
+import { createAiSimulator, simulateAiCall } from "./simulate-ai-call.js";
 
 afterEach(() => {
   vi.useRealTimers();
@@ -34,5 +34,14 @@ describe("simulateAiCall", () => {
     await vi.advanceTimersByTimeAsync(5000);
 
     await rejection;
+  });
+
+  it("supports deterministic zero and full failure rates", async () => {
+    await expect(
+      createAiSimulator({ delayMs: 0, failureRate: 0, random: () => 0 })("ok")
+    ).resolves.toContain('"ok"');
+    await expect(
+      createAiSimulator({ delayMs: 0, failureRate: 1, random: () => 0.999 })("fail")
+    ).rejects.toThrow("Simulated AI failure");
   });
 });

@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import type { ContentStatus } from "@prisma/client";
+import type { ContentStatus } from "../domain/content.js";
 import type { GenerationRequestRepository } from "../types/generation-request-repository.interface.js";
 import { InsufficientCreditsError } from "./insufficient-credits.error.js";
 import { RequestIdConflictError } from "./request-id-conflict.error.js";
@@ -29,7 +29,7 @@ export class ContentGenerationService {
       return {
         requestId: result.content.requestId,
         contentId: result.content.id,
-        status: "PENDING",
+        status: result.content.status,
         replayed: true,
       };
     }

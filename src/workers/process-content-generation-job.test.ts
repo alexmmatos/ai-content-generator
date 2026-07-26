@@ -6,6 +6,17 @@ import { makeContent } from "../test-utils/make-content.js";
 
 const REQUEST_ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 
+function makeStorage() {
+  return {
+    keyFor: vi.fn((contentId: string) => `content/${contentId}.txt`),
+    upload: vi.fn(async () => ({
+      key: "content/c1.txt",
+      url: "http://minio/x.txt",
+    })),
+    delete: vi.fn(async () => undefined),
+  };
+}
+
 describe("processContentGenerationJob", () => {
   it("happy path: PENDING -> PROCESSING -> COMPLETED with the uploaded resultUrl", async () => {
     const contents = new FakeContentRepository();
@@ -13,16 +24,21 @@ describe("processContentGenerationJob", () => {
     contents.seed(makeContent({ id: "c1", topic: "gatos", status: "PENDING" }));
 
     const simulateAiCall = vi.fn().mockResolvedValue("texto gerado");
-    const uploadContentFile = vi.fn().mockResolvedValue("http://minio/x.txt");
+    const contentStorage = makeStorage();
 
     await processContentGenerationJob("c1", REQUEST_ID, {
       statusService,
       simulateAiCall,
-      uploadContentFile,
+      contentStorage,
     });
 
     expect(simulateAiCall).toHaveBeenCalledWith("gatos");
-    expect(uploadContentFile).toHaveBeenCalledWith("c1", "texto gerado", REQUEST_ID);
+    expect(contentStorage.upload).toHaveBeenCalledWith({
+      contentId: "c1",
+      text: "texto gerado",
+      requestId: REQUEST_ID,
+    });
+    expect(contentStorage.delete).not.toHaveBeenCalled();
     const final = await statusService.getById("c1");
     expect(final.status).toBe("COMPLETED");
     expect(final.resultUrl).toBe("http://minio/x.txt");
@@ -34,16 +50,17 @@ describe("processContentGenerationJob", () => {
     contents.seed(makeContent({ id: "c1", status: "CANCELED" }));
 
     const simulateAiCall = vi.fn();
-    const uploadContentFile = vi.fn();
+    const contentStorage = makeStorage();
 
     await processContentGenerationJob("c1", REQUEST_ID, {
       statusService,
       simulateAiCall,
-      uploadContentFile,
+      contentStorage,
     });
 
     expect(simulateAiCall).not.toHaveBeenCalled();
-    expect(uploadContentFile).not.toHaveBeenCalled();
+    expect(contentStorage.upload).not.toHaveBeenCalled();
+    expect(contentStorage.delete).toHaveBeenCalledWith("content/c1.txt");
     expect((await statusService.getById("c1")).status).toBe("CANCELED");
   });
 
@@ -55,16 +72,17 @@ describe("processContentGenerationJob", () => {
       contents.seed(makeContent({ id: "c1", status }));
 
       const simulateAiCall = vi.fn();
-      const uploadContentFile = vi.fn();
+      const contentStorage = makeStorage();
 
       await processContentGenerationJob("c1", REQUEST_ID, {
         statusService,
         simulateAiCall,
-        uploadContentFile,
+        contentStorage,
       });
 
       expect(simulateAiCall).not.toHaveBeenCalled();
-      expect(uploadContentFile).not.toHaveBeenCalled();
+      expect(contentStorage.upload).not.toHaveBeenCalled();
+      expect(contentStorage.delete).not.toHaveBeenCalled();
       expect((await statusService.getById("c1")).status).toBe(status);
     }
   );
@@ -78,15 +96,16 @@ describe("processContentGenerationJob", () => {
       await statusService.cancel("c1");
       return "texto gerado";
     });
-    const uploadContentFile = vi.fn().mockResolvedValue("http://minio/x.txt");
+    const contentStorage = makeStorage();
 
     await processContentGenerationJob("c1", REQUEST_ID, {
       statusService,
       simulateAiCall,
-      uploadContentFile,
+      contentStorage,
     });
 
-    expect(uploadContentFile).toHaveBeenCalled();
+    expect(contentStorage.upload).toHaveBeenCalled();
+    expect(contentStorage.delete).toHaveBeenCalledWith("content/c1.txt");
     expect((await statusService.getById("c1")).status).toBe("CANCELED");
   });
 
@@ -96,17 +115,17 @@ describe("processContentGenerationJob", () => {
     contents.seed(makeContent({ id: "c1", topic: "gatos", status: "PENDING" }));
 
     const simulateAiCall = vi.fn().mockRejectedValue(new Error("AI unavailable"));
-    const uploadContentFile = vi.fn();
+    const contentStorage = makeStorage();
 
     await expect(
       processContentGenerationJob("c1", REQUEST_ID, {
         statusService,
         simulateAiCall,
-        uploadContentFile,
+        contentStorage,
       })
     ).rejects.toThrow("AI unavailable");
 
-    expect(uploadContentFile).not.toHaveBeenCalled();
+    expect(contentStorage.upload).not.toHaveBeenCalled();
     expect((await statusService.getById("c1")).status).toBe("PROCESSING");
   });
 
@@ -116,13 +135,14 @@ describe("processContentGenerationJob", () => {
     contents.seed(makeContent({ id: "c1", topic: "gatos", status: "PENDING" }));
 
     const simulateAiCall = vi.fn().mockResolvedValue("texto gerado");
-    const uploadContentFile = vi.fn().mockRejectedValue(new Error("S3 unavailable"));
+    const contentStorage = makeStorage();
+    contentStorage.upload.mockRejectedValueOnce(new Error("S3 unavailable"));
 
     await expect(
       processContentGenerationJob("c1", REQUEST_ID, {
         statusService,
         simulateAiCall,
-        uploadContentFile,
+        contentStorage,
       })
     ).rejects.toThrow("S3 unavailable");
 
@@ -135,20 +155,47 @@ describe("processContentGenerationJob", () => {
     contents.seed(makeContent({ id: "c1", topic: "gatos", status: "PENDING" }));
 
     const simulateAiCall = vi.fn().mockResolvedValue("texto gerado");
-    const uploadContentFile = vi.fn().mockImplementation(async () => {
+    const contentStorage = makeStorage();
+    contentStorage.upload.mockImplementationOnce(async () => {
       await statusService.cancel("c1");
-      return "http://minio/result.txt";
+      return {
+        key: "content/c1.txt",
+        url: "http://minio/result.txt",
+      };
     });
 
     await processContentGenerationJob("c1", REQUEST_ID, {
       statusService,
       simulateAiCall,
-      uploadContentFile,
+      contentStorage,
     });
 
     expect(await statusService.getById("c1")).toMatchObject({
       status: "CANCELED",
       resultUrl: null,
     });
+    expect(contentStorage.delete).toHaveBeenCalledWith("content/c1.txt");
+  });
+
+  it("propagates cleanup failure so BullMQ can retry orphan deletion", async () => {
+    const contents = new FakeContentRepository();
+    const statusService = new ContentStatusService(contents);
+    contents.seed(makeContent({ id: "c1", topic: "gatos", status: "PENDING" }));
+    const contentStorage = makeStorage();
+    const simulateAiCall = vi.fn().mockImplementation(async () => {
+      await statusService.cancel("c1");
+      return "texto gerado";
+    });
+    contentStorage.delete.mockRejectedValueOnce(new Error("delete unavailable"));
+
+    await expect(
+      processContentGenerationJob("c1", REQUEST_ID, {
+        statusService,
+        simulateAiCall,
+        contentStorage,
+      })
+    ).rejects.toThrow("delete unavailable");
+
+    expect((await statusService.getById("c1")).status).toBe("CANCELED");
   });
 });

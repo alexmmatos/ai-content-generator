@@ -6,11 +6,22 @@ export async function processContentGenerationJob(
   deps: ProcessJobDeps
 ): Promise<void> {
   const processing = await deps.statusService.markProcessing(contentId);
-  if (!processing) return;
+  if (!processing) {
+    const current = await deps.statusService.findById(contentId);
+    if (current?.status === "CANCELED") {
+      await deps.contentStorage.delete(deps.contentStorage.keyFor(contentId));
+    }
+    return;
+  }
 
   const text = await deps.simulateAiCall(processing.topic);
 
-  const resultUrl = await deps.uploadContentFile(contentId, text, requestId);
+  const uploaded = await deps.contentStorage.upload({
+    contentId,
+    text,
+    requestId,
+  });
 
-  await deps.statusService.markCompleted(contentId, resultUrl);
+  const completed = await deps.statusService.markCompleted(contentId, uploaded.url);
+  if (!completed) await deps.contentStorage.delete(uploaded.key);
 }

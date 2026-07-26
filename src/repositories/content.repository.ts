@@ -1,6 +1,8 @@
-import type { Content, ContentStatus } from "@prisma/client";
+import { Prisma, type Content } from "@prisma/client";
+import type { ContentEntity, ContentStatus } from "../domain/content.js";
 import type { ContentRepository } from "../types/content-repository.interface.js";
 import { prisma } from "../lib/prisma.js";
+import { OUTBOX_NOTIFY_CHANNEL } from "../lib/outbox-channel.js";
 
 export class PrismaContentRepository implements ContentRepository {
   async create(input: {
@@ -8,25 +10,131 @@ export class PrismaContentRepository implements ContentRepository {
     requestHash: string;
     userId: string;
     topic: string;
-  }): Promise<Content> {
-    return prisma.content.create({ data: input });
+  }): Promise<ContentEntity> {
+    return toContentEntity(await prisma.content.create({ data: input }));
   }
 
-  async findById(id: string): Promise<Content | null> {
-    return prisma.content.findUnique({ where: { id } });
+  async findById(id: string): Promise<ContentEntity | null> {
+    const content = await prisma.content.findUnique({ where: { id } });
+    return content ? toContentEntity(content) : null;
   }
 
   async updateStatusIf(
     id: string,
     expectedStatus: ContentStatus | ContentStatus[],
-    data: Partial<Pick<Content, "status" | "resultUrl">>
-  ): Promise<Content | null> {
+    data: Partial<Pick<ContentEntity, "status" | "resultUrl">>
+  ): Promise<ContentEntity | null> {
     const statuses = Array.isArray(expectedStatus) ? expectedStatus : [expectedStatus];
     const result = await prisma.content.updateMany({
       where: { id, status: { in: statuses } },
       data,
     });
     if (result.count !== 1) return null;
-    return prisma.content.findUnique({ where: { id } });
+    const content = await prisma.content.findUnique({ where: { id } });
+    return content ? toContentEntity(content) : null;
   }
+
+  async markCompleted(id: string, resultUrl: string): Promise<ContentEntity | null> {
+    const terminalAt = await databaseNow();
+    const result = await prisma.content.updateMany({
+      where: { id, status: "PROCESSING" },
+      data: { status: "COMPLETED", resultUrl, terminalAt },
+    });
+    if (result.count !== 1) return null;
+    return this.findById(id);
+  }
+
+  async markFailed(id: string): Promise<ContentEntity | null> {
+    const terminalAt = await databaseNow();
+    const result = await prisma.content.updateMany({
+      where: { id, status: { in: ["PENDING", "PROCESSING"] } },
+      data: { status: "FAILED", terminalAt },
+    });
+    if (result.count !== 1) return null;
+    return this.findById(id);
+  }
+
+  async cancelWithPriority(
+    id: string
+  ): Promise<{ content: ContentEntity; canceled: boolean } | null> {
+    return prisma.$transaction(async (tx) => {
+      const rows = await tx.$queryRaw<Array<{ requestedAt: Date }>>(
+        Prisma.sql`SELECT transaction_timestamp() AS "requestedAt"`
+      );
+      const requestedAt = rows[0]?.requestedAt;
+      if (!requestedAt) throw new Error("Could not obtain cancellation timestamp");
+
+      const updated = await tx.content.updateMany({
+        where: {
+          id,
+          OR: [
+            { status: { in: ["PENDING", "PROCESSING"] } },
+            {
+              status: { in: ["COMPLETED", "FAILED"] },
+              terminalAt: { gte: requestedAt },
+            },
+          ],
+        },
+        data: {
+          status: "CANCELED",
+          resultUrl: null,
+          cancellationRequestedAt: requestedAt,
+          terminalAt: requestedAt,
+        },
+      });
+
+      if (updated.count !== 1) {
+        const current = await tx.content.findUnique({ where: { id } });
+        return current
+          ? { content: toContentEntity(current), canceled: false }
+          : null;
+      }
+
+      const content = await tx.content.findUniqueOrThrow({ where: { id } });
+      await tx.outboxEvent.upsert({
+        where: {
+          type_aggregateId: {
+            type: "CONTENT_CANCELLATION_REQUESTED",
+            aggregateId: id,
+          },
+        },
+        create: {
+          type: "CONTENT_CANCELLATION_REQUESTED",
+          aggregateId: id,
+          requestId: content.requestId,
+          payload: { contentId: id, requestId: content.requestId },
+        },
+        update: {},
+      });
+
+      await tx.$executeRaw`SELECT pg_notify(${OUTBOX_NOTIFY_CHANNEL}, '')`;
+
+      return { content: toContentEntity(content), canceled: true };
+    });
+  }
+}
+
+async function databaseNow(): Promise<Date> {
+  const rows = await prisma.$queryRaw<Array<{ now: Date }>>(
+    Prisma.sql`SELECT clock_timestamp() AS "now"`
+  );
+  const now = rows[0]?.now;
+  if (!now) throw new Error("Could not obtain database timestamp");
+  return now;
+}
+
+export function toContentEntity(content: Content): ContentEntity {
+  return {
+    id: content.id,
+    requestId: content.requestId,
+    requestHash: content.requestHash,
+    userId: content.userId,
+    topic: content.topic,
+    status: content.status,
+    resultUrl: content.resultUrl,
+    cancellationRequestedAt: content.cancellationRequestedAt,
+    terminalAt: content.terminalAt,
+    createdAt: content.createdAt,
+    updatedAt: content.updatedAt,
+  };
 }

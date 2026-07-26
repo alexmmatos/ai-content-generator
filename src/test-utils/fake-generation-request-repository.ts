@@ -51,6 +51,10 @@ export class FakeGenerationRequestRepository implements GenerationRequestReposit
     if (!debited) return { kind: "insufficient_credits" };
 
     const content = await this.contents.create(input);
-    return { kind: "created", content };
+    return {
+      kind: "created",
+      content,
+      outboxEventId: `outbox:${input.requestId}`,
+    };
   }
 }

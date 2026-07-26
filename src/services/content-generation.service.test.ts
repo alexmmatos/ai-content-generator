@@ -89,6 +89,41 @@ describe("ContentGenerationService.generate", () => {
     expect((await users.findById("user-1"))?.credits).toBe(1);
   });
 
+  it.each(["PROCESSING", "COMPLETED", "CANCELED", "FAILED"] as const)(
+    "returns the persisted %s status on a late replay",
+    async (status) => {
+      const { users, contents, service } = buildService();
+      users.seed(makeUser({ id: "user-1", credits: 2 }));
+      const input = {
+        requestId: REQUEST_ID,
+        userId: "user-1",
+        topic: "gatos",
+      };
+
+      const first = await service.generate(input);
+      await contents.updateStatusIf(
+        first.contentId,
+        status === "PROCESSING" ? "PENDING" : ["PENDING", "PROCESSING"],
+        {
+          status,
+          ...(status === "COMPLETED"
+            ? { resultUrl: "http://minio/content/result.txt" }
+            : {}),
+        }
+      );
+
+      const replay = await service.generate(input);
+
+      expect(replay).toMatchObject({
+        requestId: REQUEST_ID,
+        contentId: first.contentId,
+        status,
+        replayed: true,
+      });
+      expect((await users.findById("user-1"))?.credits).toBe(1);
+    }
+  );
+
   it("rejects reuse of a request ID with a different payload", async () => {
     const { users, service } = buildService();
     users.seed(makeUser({ id: "user-1", credits: 2 }));

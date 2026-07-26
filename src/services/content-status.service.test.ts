@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { ContentStatusService } from "./content-status.service.js";
 import { ContentNotFoundError } from "./content-not-found.error.js";
 import { FakeContentRepository } from "../test-utils/fake-content-repository.js";
@@ -64,6 +64,31 @@ describe("ContentStatusService status transitions", () => {
     expect(await service.markCompleted("missing", "http://example.com/result.txt")).toBeNull();
     expect(await service.markFailed("missing")).toBeNull();
   });
+
+  it("finalizes failure from PENDING and treats missing content as settled", async () => {
+    const { contents, service } = buildService();
+    contents.seed(makeContent({ id: "c1", status: "PENDING" }));
+
+    await expect(service.finalizeFailure("c1")).resolves.toBe("marked_failed");
+    await expect(service.finalizeFailure("missing")).resolves.toBe("already_terminal");
+  });
+
+  it("keeps the legacy markFailed result for a successful finalization", async () => {
+    const { contents, service } = buildService();
+    contents.seed(makeContent({ id: "c1", status: "PENDING" }));
+
+    await expect(service.markFailed("c1")).resolves.toMatchObject({
+      status: "FAILED",
+    });
+  });
+
+  it("requests reconciliation when a non-terminal compare-and-set loses unexpectedly", async () => {
+    const { contents, service } = buildService();
+    contents.seed(makeContent({ id: "c1", status: "PROCESSING" }));
+    vi.spyOn(contents, "markFailed").mockResolvedValueOnce(null);
+
+    await expect(service.finalizeFailure("c1")).resolves.toBe("retry_required");
+  });
 });
 
 describe("ContentStatusService retry-vs-cancel guard", () => {
@@ -128,7 +153,10 @@ describe("ContentStatusService.cancel idempotency", () => {
     await service.cancel("c1");
     const second = await service.cancel("c1");
 
-    expect(second.status).toBe("CANCELED");
+    expect(second).toMatchObject({
+      content: { status: "CANCELED" },
+      canceled: false,
+    });
   });
 
   it("cancel on an already-COMPLETED content is a no-op that returns the current state", async () => {
@@ -139,7 +167,10 @@ describe("ContentStatusService.cancel idempotency", () => {
 
     const result = await service.cancel("c1");
 
-    expect(result.status).toBe("COMPLETED");
+    expect(result).toMatchObject({
+      content: { status: "COMPLETED" },
+      canceled: false,
+    });
   });
 
   it("cancel on an already-FAILED content is a no-op that returns the current state", async () => {
@@ -148,7 +179,10 @@ describe("ContentStatusService.cancel idempotency", () => {
 
     const result = await service.cancel("c1");
 
-    expect(result.status).toBe("FAILED");
+    expect(result).toMatchObject({
+      content: { status: "FAILED" },
+      canceled: false,
+    });
   });
 
   it("preserves the result URL when cancel is attempted after completion", async () => {
@@ -164,8 +198,23 @@ describe("ContentStatusService.cancel idempotency", () => {
     const result = await service.cancel("c1");
 
     expect(result).toMatchObject({
-      status: "COMPLETED",
-      resultUrl: "http://example.com/result.txt",
+      content: {
+        status: "COMPLETED",
+        resultUrl: "http://example.com/result.txt",
+      },
+      canceled: false,
+    });
+  });
+
+  it("reports when a cancel transition was applied", async () => {
+    const { contents, service } = buildService();
+    contents.seed(makeContent({ id: "c1", status: "PROCESSING" }));
+
+    const result = await service.cancel("c1");
+
+    expect(result).toMatchObject({
+      content: { status: "CANCELED" },
+      canceled: true,
     });
   });
 });

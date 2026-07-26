@@ -1,5 +1,7 @@
 import { Prisma, type Content } from "@prisma/client";
 import { prisma } from "../lib/prisma.js";
+import { OUTBOX_NOTIFY_CHANNEL } from "../lib/outbox-channel.js";
+import { toContentEntity } from "./content.repository.js";
 import type {
   CreateGenerationRequestResult,
   GenerationRequestRepository,
@@ -17,10 +19,13 @@ export class PrismaGenerationRequestRepository implements GenerationRequestRepos
     const existing = await prisma.content.findUnique({
       where: { requestId: input.requestId },
     });
-    if (existing) return { kind: "duplicate", content: existing };
+    if (existing) return { kind: "duplicate", content: toContentEntity(existing) };
 
     try {
-      const content = await prisma.$transaction(async (tx): Promise<Content | null> => {
+      const createdRequest = await prisma.$transaction(async (tx): Promise<{
+        content: Content;
+        outboxEventId: string;
+      } | null> => {
         const user = await tx.user.findUnique({ where: { id: input.userId } });
         if (!user) return null;
 
@@ -39,7 +44,7 @@ export class PrismaGenerationRequestRepository implements GenerationRequestRepos
         });
         if (debit.count !== 1) throw new InsufficientCreditsPersistenceError();
 
-        await tx.outboxEvent.create({
+        const outboxEvent = await tx.outboxEvent.create({
           data: {
             type: "CONTENT_GENERATION_REQUESTED",
             aggregateId: created.id,
@@ -51,11 +56,20 @@ export class PrismaGenerationRequestRepository implements GenerationRequestRepos
           },
         });
 
-        return created;
+        await tx.$executeRaw`SELECT pg_notify(${OUTBOX_NOTIFY_CHANNEL}, '')`;
+
+        return {
+          content: created,
+          outboxEventId: outboxEvent.id,
+        };
       });
 
-      if (!content) return { kind: "user_not_found" };
-      return { kind: "created", content };
+      if (!createdRequest) return { kind: "user_not_found" };
+      return {
+        kind: "created",
+        content: toContentEntity(createdRequest.content),
+        outboxEventId: createdRequest.outboxEventId,
+      };
     } catch (error) {
       if (error instanceof InsufficientCreditsPersistenceError) {
         return { kind: "insufficient_credits" };
@@ -65,7 +79,9 @@ export class PrismaGenerationRequestRepository implements GenerationRequestRepos
         const duplicate = await prisma.content.findUnique({
           where: { requestId: input.requestId },
         });
-        if (duplicate) return { kind: "duplicate", content: duplicate };
+        if (duplicate) {
+          return { kind: "duplicate", content: toContentEntity(duplicate) };
+        }
       }
 
       throw error;

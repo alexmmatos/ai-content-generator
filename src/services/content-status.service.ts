@@ -1,41 +1,52 @@
-import type { Content, ContentStatus } from "@prisma/client";
+import type { ContentEntity } from "../domain/content.js";
 import type { ContentRepository } from "../types/content-repository.interface.js";
 import { ContentNotFoundError } from "./content-not-found.error.js";
-
-const CANCELABLE_STATUSES: ContentStatus[] = ["PENDING", "PROCESSING"];
 
 export class ContentStatusService {
   constructor(private contents: ContentRepository) {}
 
-  async getById(id: string): Promise<Content> {
+  async getById(id: string): Promise<ContentEntity> {
     const content = await this.contents.findById(id);
     if (!content) throw new ContentNotFoundError();
     return content;
   }
 
-  async cancel(id: string): Promise<Content> {
-    const canceled = await this.contents.updateStatusIf(id, CANCELABLE_STATUSES, {
-      status: "CANCELED",
-    });
-    if (canceled) return canceled;
-
-    return this.getById(id);
+  async findById(id: string): Promise<ContentEntity | null> {
+    return this.contents.findById(id);
   }
 
-  async markProcessing(id: string): Promise<Content | null> {
+  async cancel(id: string): Promise<{ content: ContentEntity; canceled: boolean }> {
+    const result = await this.contents.cancelWithPriority(id);
+    if (!result) throw new ContentNotFoundError();
+    return result;
+  }
+
+  async markProcessing(id: string): Promise<ContentEntity | null> {
     return this.contents.updateStatusIf(id, ["PENDING", "PROCESSING"], {
       status: "PROCESSING",
     });
   }
 
-  async markCompleted(id: string, resultUrl: string): Promise<Content | null> {
-    return this.contents.updateStatusIf(id, "PROCESSING", {
-      status: "COMPLETED",
-      resultUrl,
-    });
+  async markCompleted(id: string, resultUrl: string): Promise<ContentEntity | null> {
+    return this.contents.markCompleted(id, resultUrl);
   }
 
-  async markFailed(id: string): Promise<Content | null> {
-    return this.contents.updateStatusIf(id, "PROCESSING", { status: "FAILED" });
+  async finalizeFailure(
+    id: string
+  ): Promise<"marked_failed" | "already_terminal" | "retry_required"> {
+    const failed = await this.contents.markFailed(id);
+    if (failed) return "marked_failed";
+
+    const current = await this.contents.findById(id);
+    if (!current || ["CANCELED", "COMPLETED", "FAILED"].includes(current.status)) {
+      return "already_terminal";
+    }
+    return "retry_required";
+  }
+
+  async markFailed(id: string): Promise<ContentEntity | null> {
+    const result = await this.finalizeFailure(id);
+    if (result !== "marked_failed") return null;
+    return this.contents.findById(id);
   }
 }

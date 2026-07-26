@@ -1,6 +1,6 @@
-import type { User } from "@prisma/client";
+import type { UserEntity } from "../domain/user.js";
 
-export function makeUser(overrides: Partial<User> = {}): User {
+export function makeUser(overrides: Partial<UserEntity> = {}): UserEntity {
   const now = new Date();
   return {
     id: crypto.randomUUID(),

@@ -12,8 +12,10 @@ export class PrismaOutboxRepository implements OutboxRepository {
       take: limit,
       select: {
         id: true,
+        type: true,
         aggregateId: true,
         requestId: true,
+        payload: true,
       },
     });
   }

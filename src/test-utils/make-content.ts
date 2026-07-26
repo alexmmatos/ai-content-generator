@@ -1,6 +1,6 @@
-import type { Content } from "@prisma/client";
+import type { ContentEntity } from "../domain/content.js";
 
-export function makeContent(overrides: Partial<Content> = {}): Content {
+export function makeContent(overrides: Partial<ContentEntity> = {}): ContentEntity {
   const now = new Date();
   return {
     id: crypto.randomUUID(),
@@ -10,6 +10,8 @@ export function makeContent(overrides: Partial<Content> = {}): Content {
     topic: "topic",
     status: "PENDING",
     resultUrl: null,
+    cancellationRequestedAt: null,
+    terminalAt: null,
     createdAt: now,
     updatedAt: now,
     ...overrides,

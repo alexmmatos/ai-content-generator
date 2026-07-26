@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => {
     outboxEvent: {
       create: vi.fn(),
     },
+    $executeRaw: vi.fn(),
   };
   return {
     tx,
@@ -47,7 +48,8 @@ describe("PrismaGenerationRequestRepository", () => {
     );
     mocks.tx.user.findUnique.mockResolvedValue(makeUser({ id: "user-1" }));
     mocks.tx.user.updateMany.mockResolvedValue({ count: 1 });
-    mocks.tx.outboxEvent.create.mockResolvedValue({});
+    mocks.tx.outboxEvent.create.mockResolvedValue({ id: "outbox-1" });
+    mocks.tx.$executeRaw.mockResolvedValue(undefined);
   });
 
   it("returns an existing request before opening a transaction", async () => {
@@ -71,7 +73,11 @@ describe("PrismaGenerationRequestRepository", () => {
 
     const result = await new PrismaGenerationRequestRepository().create(INPUT);
 
-    expect(result).toEqual({ kind: "created", content });
+    expect(result).toEqual({
+      kind: "created",
+      content,
+      outboxEventId: "outbox-1",
+    });
     expect(mocks.tx.content.create).toHaveBeenCalledWith({
       data: INPUT,
     });

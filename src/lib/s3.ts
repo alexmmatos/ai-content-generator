@@ -1,12 +1,17 @@
 import { S3Client } from "@aws-sdk/client-s3";
-import { env } from "./env.js";
+import type { WorkerEnv } from "./env.js";
 
-export const s3Client = new S3Client({
-  endpoint: env.S3_ENDPOINT,
-  region: env.S3_REGION,
-  forcePathStyle: true,
-  credentials: {
-    accessKeyId: env.S3_ACCESS_KEY_ID,
-    secretAccessKey: env.S3_SECRET_ACCESS_KEY,
-  },
-});
+export function createS3Client(config: Pick<
+  WorkerEnv,
+  "S3_ENDPOINT" | "S3_REGION" | "S3_ACCESS_KEY_ID" | "S3_SECRET_ACCESS_KEY"
+>): S3Client {
+  return new S3Client({
+    endpoint: config.S3_ENDPOINT,
+    region: config.S3_REGION,
+    forcePathStyle: true,
+    credentials: {
+      accessKeyId: config.S3_ACCESS_KEY_ID,
+      secretAccessKey: config.S3_SECRET_ACCESS_KEY,
+    },
+  });
+}

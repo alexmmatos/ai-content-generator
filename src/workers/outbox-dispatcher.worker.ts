@@ -1,21 +1,58 @@
-import { contentQueue } from "../lib/content-queue.js";
-import { PrismaOutboxRepository } from "../repositories/outbox.repository.js";
-import { publishPendingOutboxEvents } from "./publish-pending-outbox-events.js";
+import type { PendingOutboxPublisher } from "../types/pending-outbox-publisher.interface.js";
 
-const outboxRepository = new PrismaOutboxRepository();
-let dispatching = false;
-
-async function dispatch(): Promise<void> {
-  if (dispatching) return;
-  dispatching = true;
-  try {
-    await publishPendingOutboxEvents(outboxRepository, contentQueue);
-  } catch (error) {
-    console.error("Outbox dispatcher failed", error);
-  } finally {
-    dispatching = false;
-  }
+interface DispatcherLogger {
+  error(message: string, error: unknown): void;
 }
 
-void dispatch();
-setInterval(() => void dispatch(), 1000);
+interface DispatcherTimer {
+  set(callback: () => void, intervalMs: number): ReturnType<typeof setInterval>;
+  clear(handle: ReturnType<typeof setInterval>): void;
+}
+
+const systemTimer: DispatcherTimer = {
+  set: (callback, intervalMs) => setInterval(callback, intervalMs),
+  clear: (handle) => clearInterval(handle),
+};
+
+export function createOutboxDispatcher(input: {
+  publisher: PendingOutboxPublisher;
+  intervalMs?: number;
+  logger?: DispatcherLogger;
+  timer?: DispatcherTimer;
+}): {
+  start(): void;
+  dispatchNow(): Promise<void>;
+  close(): void;
+} {
+  const intervalMs = input.intervalMs ?? 1000;
+  const logger = input.logger ?? console;
+  const timer = input.timer ?? systemTimer;
+  let dispatching = false;
+  let timerHandle: ReturnType<typeof setInterval> | null = null;
+
+  async function dispatchNow(): Promise<void> {
+    if (dispatching) return;
+    dispatching = true;
+    try {
+      await input.publisher.publishPending();
+    } catch (error) {
+      logger.error("Outbox dispatcher failed", error);
+    } finally {
+      dispatching = false;
+    }
+  }
+
+  function start(): void {
+    if (timerHandle) return;
+    void dispatchNow();
+    timerHandle = timer.set(() => void dispatchNow(), intervalMs);
+  }
+
+  function close(): void {
+    if (!timerHandle) return;
+    timer.clear(timerHandle);
+    timerHandle = null;
+  }
+
+  return { start, dispatchNow, close };
+}

@@ -1,6 +1,5 @@
 import { randomUUID } from "node:crypto";
 import { prisma } from "../src/lib/prisma.js";
-import { uploadContentFile } from "../src/lib/upload-content-file.js";
 
 async function main() {
   const existing = await prisma.user.findFirst();
@@ -25,12 +24,10 @@ async function main() {
       status: "COMPLETED",
     },
   });
-  const resultUrl = await uploadContentFile(
-    completed.id,
-    `Conteúdo gerado sobre "${completed.topic}" (seed).`,
-    completed.requestId
-  );
-  await prisma.content.update({ where: { id: completed.id }, data: { resultUrl } });
+  await prisma.content.update({
+    where: { id: completed.id },
+    data: { resultUrl: "https://example.com/seed-content.txt" },
+  });
 
   await prisma.content.createMany({
     data: [
@@ -70,11 +67,15 @@ async function main() {
   console.log(`Seed: content seeded for user ${userWithCredits.id} covering PENDING, PROCESSING, COMPLETED, CANCELED and FAILED`);
 }
 
-main()
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
-  })
-  .finally(async () => {
+async function run(): Promise<void> {
+  try {
+    await main();
+  } catch (error) {
+    console.error(error);
+    process.exitCode = 1;
+  } finally {
     await prisma.$disconnect();
-  });
+  }
+}
+
+void run();

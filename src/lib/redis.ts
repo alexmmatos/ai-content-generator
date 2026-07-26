@@ -1,6 +1,14 @@
 import { Redis } from "ioredis";
-import { env } from "./env.js";
 
-export const redisConnection = new Redis(env.REDIS_URL, {
-  maxRetriesPerRequest: null,
-});
+export function createRedisProducerConnection(redisUrl: string): Redis {
+  return new Redis(redisUrl, {
+    maxRetriesPerRequest: 1,
+    enableOfflineQueue: false,
+  });
+}
+
+export function createRedisWorkerConnection(redisUrl: string): Redis {
+  return new Redis(redisUrl, {
+    maxRetriesPerRequest: null,
+  });
+}

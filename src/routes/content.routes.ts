@@ -22,6 +22,7 @@ export function createContentRoutes(deps: ContentRoutesDependencies): FastifyPlu
             402: ErrorResponseSchema,
             404: ErrorResponseSchema,
             409: ErrorResponseSchema,
+            500: ErrorResponseSchema,
           },
         },
       },
@@ -48,6 +49,7 @@ export function createContentRoutes(deps: ContentRoutesDependencies): FastifyPlu
             200: ContentResponseSchema,
             400: ErrorResponseSchema,
             404: ErrorResponseSchema,
+            500: ErrorResponseSchema,
           },
         },
       },
@@ -75,12 +77,17 @@ export function createContentRoutes(deps: ContentRoutesDependencies): FastifyPlu
             200: CancelContentResponseSchema,
             400: ErrorResponseSchema,
             404: ErrorResponseSchema,
+            500: ErrorResponseSchema,
           },
         },
       },
       async (request) => {
-        const content = await deps.contentStatusService.cancel(request.params.id);
-        return { id: content.id, status: content.status };
+        const result = await deps.contentStatusService.cancel(request.params.id);
+        return {
+          id: result.content.id,
+          status: result.content.status,
+          canceled: result.canceled,
+        };
       }
     );
   };

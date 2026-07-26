@@ -1,4 +1,4 @@
-import type { Content, ContentStatus } from "@prisma/client";
+import type { ContentEntity, ContentStatus } from "../domain/content.js";
 
 export interface ContentRepository {
   create(input: {
@@ -6,11 +6,16 @@ export interface ContentRepository {
     requestHash: string;
     userId: string;
     topic: string;
-  }): Promise<Content>;
-  findById(id: string): Promise<Content | null>;
+  }): Promise<ContentEntity>;
+  findById(id: string): Promise<ContentEntity | null>;
   updateStatusIf(
     id: string,
     expectedStatus: ContentStatus | ContentStatus[],
-    data: Partial<Pick<Content, "status" | "resultUrl">>
-  ): Promise<Content | null>;
+    data: Partial<Pick<ContentEntity, "status" | "resultUrl">>
+  ): Promise<ContentEntity | null>;
+  markCompleted(id: string, resultUrl: string): Promise<ContentEntity | null>;
+  markFailed(id: string): Promise<ContentEntity | null>;
+  cancelWithPriority(
+    id: string
+  ): Promise<{ content: ContentEntity; canceled: boolean } | null>;
 }

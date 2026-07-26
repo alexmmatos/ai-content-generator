@@ -1,20 +1,14 @@
-import { env } from "./lib/env.js";
-import { buildApp } from "./app.js";
-import { PrismaContentRepository } from "./repositories/content.repository.js";
-import { PrismaGenerationRequestRepository } from "./repositories/generation-request.repository.js";
-import { ContentGenerationService } from "./services/content-generation.service.js";
-import { ContentStatusService } from "./services/content-status.service.js";
+import { createApiRuntime } from "./bootstrap/api-runtime.js";
+import { parseApiEnv } from "./lib/env.js";
 
-const contentRepository = new PrismaContentRepository();
+const env = parseApiEnv(process.env);
+const app = createApiRuntime(env);
 
-const app = buildApp({
-  contentGenerationService: new ContentGenerationService(
-    new PrismaGenerationRequestRepository()
-  ),
-  contentStatusService: new ContentStatusService(contentRepository),
+app.listen({ port: env.PORT, host: "0.0.0.0" }).catch((error) => {
+  app.log.error(error);
+  process.exitCode = 1;
 });
 
-app.listen({ port: env.PORT, host: "0.0.0.0" }).catch((err) => {
-  app.log.error(err);
-  process.exit(1);
-});
+for (const signal of ["SIGINT", "SIGTERM"] as const) {
+  process.once(signal, () => void app.close());
+}
