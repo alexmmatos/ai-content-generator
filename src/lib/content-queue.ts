@@ -2,7 +2,7 @@ import { Queue, type ConnectionOptions, type JobsOptions } from "bullmq";
 import { CONTENT_QUEUE_NAME } from "./queue-name.js";
 import type { GenerateContentJobData } from "../types/generate-content-job-data.interface.js";
 
-export const CONTENT_JOB_OPTIONS = {
+const CONTENT_JOB_OPTIONS = {
   attempts: 3,
   backoff: { type: "exponential", delay: 2000 },
   removeOnComplete: { age: 86_400, count: 1_000 },

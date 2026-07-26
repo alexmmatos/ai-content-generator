@@ -1,6 +1,6 @@
 import { DeleteObjectCommand, HeadObjectCommand } from "@aws-sdk/client-s3";
 import { afterAll, describe, expect, it } from "vitest";
-import { parseWorkerEnv } from "../src/lib/env.js";
+import { parseWorkerEnv } from "../src/lib/parse-worker-env.js";
 import { prisma } from "../src/lib/prisma.js";
 import { createS3Client } from "../src/lib/s3.js";
 

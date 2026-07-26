@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { buildApp } from "../app.js";
-import type { ApiEnv } from "../lib/env.js";
+import type { ApiEnv } from "../types/api-env.type.js";
 import { prisma } from "../lib/prisma.js";
 import { PrismaContentRepository } from "../repositories/content.repository.js";
 import { PrismaGenerationRequestRepository } from "../repositories/generation-request.repository.js";

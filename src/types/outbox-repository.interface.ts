@@ -1,10 +1,4 @@
-export interface PendingOutboxEvent {
-  id: string;
-  type: string;
-  aggregateId: string;
-  requestId: string;
-  payload: unknown;
-}
+import type { PendingOutboxEvent } from "./pending-outbox-event.interface.js";
 
 export interface OutboxRepository {
   findPending(limit: number): Promise<PendingOutboxEvent[]>;

@@ -1,17 +1,17 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createAiSimulator, simulateAiCall } from "./simulate-ai-call.js";
+import { createAiSimulator } from "./simulate-ai-call.js";
 
 afterEach(() => {
   vi.useRealTimers();
   vi.restoreAllMocks();
 });
 
-describe("simulateAiCall", () => {
+describe("createAiSimulator", () => {
   it("waits five seconds and returns generated text for a successful call", async () => {
     vi.useFakeTimers();
     vi.spyOn(Math, "random").mockReturnValue(0.2);
 
-    const result = simulateAiCall("arquitetura limpa");
+    const result = createAiSimulator()("arquitetura limpa");
 
     await vi.advanceTimersByTimeAsync(4999);
     let settled = false;
@@ -29,7 +29,7 @@ describe("simulateAiCall", () => {
     vi.useFakeTimers();
     vi.spyOn(Math, "random").mockReturnValue(0.199);
 
-    const result = simulateAiCall("gatos");
+    const result = createAiSimulator()("gatos");
     const rejection = expect(result).rejects.toThrow("Simulated AI failure");
     await vi.advanceTimersByTimeAsync(5000);
 

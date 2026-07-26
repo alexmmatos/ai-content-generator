@@ -1,4 +1,5 @@
-import type { ContentEntity, ContentStatus } from "../domain/content.js";
+import type { ContentEntity } from "../domain/content.js";
+import type { ContentStatus } from "../domain/content-status.js";
 import type { ContentRepository } from "../types/content-repository.interface.js";
 import { makeContent } from "./make-content.js";
 

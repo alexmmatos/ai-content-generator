@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import type { WorkerEnv } from "../lib/env.js";
+import type { WorkerEnv } from "../types/worker-env.type.js";
 
 const mocks = vi.hoisted(() => ({
   producerRedis: { quit: vi.fn().mockResolvedValue(undefined) },
@@ -19,8 +19,10 @@ const mocks = vi.hoisted(() => ({
   disconnect: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock("../lib/redis.js", () => ({
+vi.mock("../lib/create-redis-producer-connection.js", () => ({
   createRedisProducerConnection: vi.fn(() => mocks.producerRedis),
+}));
+vi.mock("../lib/create-redis-worker-connection.js", () => ({
   createRedisWorkerConnection: vi.fn(() => mocks.workerRedis),
 }));
 vi.mock("../lib/content-queue.js", () => ({

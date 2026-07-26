@@ -1,11 +1,9 @@
 import { createContentQueue } from "../lib/content-queue.js";
-import type { WorkerEnv } from "../lib/env.js";
+import type { WorkerEnv } from "../types/worker-env.type.js";
 import { createOutboxListener } from "../lib/outbox-listener.js";
 import { prisma } from "../lib/prisma.js";
-import {
-  createRedisProducerConnection,
-  createRedisWorkerConnection,
-} from "../lib/redis.js";
+import { createRedisProducerConnection } from "../lib/create-redis-producer-connection.js";
+import { createRedisWorkerConnection } from "../lib/create-redis-worker-connection.js";
 import { createS3Client } from "../lib/s3.js";
 import { S3ContentStorage } from "../lib/upload-content-file.js";
 import { PrismaContentRepository } from "../repositories/content.repository.js";

@@ -1,10 +1,4 @@
-import type { ContentEntity } from "../domain/content.js";
-
-export type CreateGenerationRequestResult =
-  | { kind: "created"; content: ContentEntity; outboxEventId: string }
-  | { kind: "duplicate"; content: ContentEntity }
-  | { kind: "user_not_found" }
-  | { kind: "insufficient_credits" };
+import type { CreateGenerationRequestResult } from "./create-generation-request-result.type.js";
 
 export interface GenerationRequestRepository {
   create(input: {

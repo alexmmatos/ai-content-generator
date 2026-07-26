@@ -10,21 +10,9 @@ vi.mock("ioredis", () => ({
   },
 }));
 
-import {
-  createRedisProducerConnection,
-  createRedisWorkerConnection,
-} from "./redis.js";
+import { createRedisWorkerConnection } from "./create-redis-worker-connection.js";
 
-describe("Redis connection factories", () => {
-  it("creates a fail-fast producer connection", () => {
-    createRedisProducerConnection("redis://localhost:6379");
-
-    expect(redisConstructor).toHaveBeenCalledWith("redis://localhost:6379", {
-      maxRetriesPerRequest: 1,
-      enableOfflineQueue: false,
-    });
-  });
-
+describe("createRedisWorkerConnection", () => {
   it("creates a BullMQ-compatible worker connection", () => {
     createRedisWorkerConnection("redis://localhost:6379");
 

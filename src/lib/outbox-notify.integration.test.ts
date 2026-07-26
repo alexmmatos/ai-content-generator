@@ -3,7 +3,7 @@ import { Client } from "pg";
 import { afterAll, afterEach, describe, expect, it } from "vitest";
 import { prisma } from "./prisma.js";
 import { OUTBOX_NOTIFY_CHANNEL } from "./outbox-channel.js";
-import { createGenerationRequestHash } from "../services/content-generation.service.js";
+import { createGenerationRequestHash } from "../services/create-generation-request-hash.js";
 import { PrismaGenerationRequestRepository } from "../repositories/generation-request.repository.js";
 
 // Well below OUTBOX_POLL_INTERVAL_MS's default of 1000ms — proves NOTIFY woke the

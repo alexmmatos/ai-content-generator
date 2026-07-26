@@ -3,10 +3,8 @@ import {
   PutObjectCommand,
   type S3Client,
 } from "@aws-sdk/client-s3";
-import type {
-  ContentStorage,
-  UploadedContent,
-} from "../types/content-storage.interface.js";
+import type { ContentStorage } from "../types/content-storage.interface.js";
+import type { UploadedContent } from "../types/uploaded-content.interface.js";
 
 export class S3ContentStorage implements ContentStorage {
   constructor(

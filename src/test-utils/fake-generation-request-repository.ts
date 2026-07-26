@@ -1,7 +1,5 @@
-import type {
-  CreateGenerationRequestResult,
-  GenerationRequestRepository,
-} from "../types/generation-request-repository.interface.js";
+import type { GenerationRequestRepository } from "../types/generation-request-repository.interface.js";
+import type { CreateGenerationRequestResult } from "../types/create-generation-request-result.type.js";
 import type { FakeContentRepository } from "./fake-content-repository.js";
 import type { FakeUserRepository } from "./fake-user-repository.js";
 

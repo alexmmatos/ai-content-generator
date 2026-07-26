@@ -1,8 +1,10 @@
-import { Prisma, type Content } from "@prisma/client";
-import type { ContentEntity, ContentStatus } from "../domain/content.js";
+import { Prisma } from "@prisma/client";
+import type { ContentEntity } from "../domain/content.js";
+import type { ContentStatus } from "../domain/content-status.js";
 import type { ContentRepository } from "../types/content-repository.interface.js";
 import { prisma } from "../lib/prisma.js";
 import { OUTBOX_NOTIFY_CHANNEL } from "../lib/outbox-channel.js";
+import { toContentEntity } from "./to-content-entity.js";
 
 export class PrismaContentRepository implements ContentRepository {
   async create(input: {
@@ -121,20 +123,4 @@ async function databaseNow(): Promise<Date> {
   const now = rows[0]?.now;
   if (!now) throw new Error("Could not obtain database timestamp");
   return now;
-}
-
-export function toContentEntity(content: Content): ContentEntity {
-  return {
-    id: content.id,
-    requestId: content.requestId,
-    requestHash: content.requestHash,
-    userId: content.userId,
-    topic: content.topic,
-    status: content.status,
-    resultUrl: content.resultUrl,
-    cancellationRequestedAt: content.cancellationRequestedAt,
-    terminalAt: content.terminalAt,
-    createdAt: content.createdAt,
-    updatedAt: content.updatedAt,
-  };
 }

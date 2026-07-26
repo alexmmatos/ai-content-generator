@@ -13,5 +13,3 @@ export function createAiSimulator(options: {
     return `Conteúdo gerado sobre "${topic}".\n\nEste é um texto fictício produzido pela IA simulada para fins do desafio técnico.`;
   };
 }
-
-export const simulateAiCall = createAiSimulator();

@@ -1,12 +1,4 @@
-export const CONTENT_STATUSES = [
-  "PENDING",
-  "PROCESSING",
-  "COMPLETED",
-  "CANCELED",
-  "FAILED",
-] as const;
-
-export type ContentStatus = (typeof CONTENT_STATUSES)[number];
+import type { ContentStatus } from "./content-status.js";
 
 export interface ContentEntity {
   id: string;

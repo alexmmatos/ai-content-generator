@@ -1,7 +1,4 @@
-export interface UploadedContent {
-  key: string;
-  url: string;
-}
+import type { UploadedContent } from "./uploaded-content.interface.js";
 
 export interface ContentStorage {
   upload(input: {

@@ -1,5 +1,5 @@
 import { S3Client } from "@aws-sdk/client-s3";
-import type { WorkerEnv } from "./env.js";
+import type { WorkerEnv } from "../types/worker-env.type.js";
 
 export function createS3Client(config: Pick<
   WorkerEnv,

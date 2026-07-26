@@ -1,6 +1,6 @@
-import { createHash } from "node:crypto";
-import type { ContentStatus } from "../domain/content.js";
+import type { ContentStatus } from "../domain/content-status.js";
 import type { GenerationRequestRepository } from "../types/generation-request-repository.interface.js";
+import { createGenerationRequestHash } from "./create-generation-request-hash.js";
 import { InsufficientCreditsError } from "./insufficient-credits.error.js";
 import { RequestIdConflictError } from "./request-id-conflict.error.js";
 import { UserNotFoundError } from "./user-not-found.error.js";
@@ -41,20 +41,4 @@ export class ContentGenerationService {
       replayed: false,
     };
   }
-}
-
-export function createGenerationRequestHash(input: {
-  requestId?: string;
-  userId: string;
-  topic: string;
-}): string {
-  return createHash("sha256")
-    .update(
-      JSON.stringify({
-        operation: "content.generate.v1",
-        userId: input.userId,
-        topic: input.topic,
-      })
-    )
-    .digest("hex");
 }

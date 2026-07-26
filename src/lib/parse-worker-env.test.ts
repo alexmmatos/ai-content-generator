@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseApiEnv, parseWorkerEnv } from "./env.js";
+import { parseWorkerEnv } from "./parse-worker-env.js";
 
 const WORKER_ENV = {
   DATABASE_URL: "postgresql://localhost/database",
@@ -12,16 +12,7 @@ const WORKER_ENV = {
   S3_SECRET_ACCESS_KEY: "secret",
 };
 
-describe("runtime environment parsing", () => {
-  it("starts the API with only PostgreSQL configuration", () => {
-    expect(
-      parseApiEnv({ DATABASE_URL: "postgresql://localhost/database" })
-    ).toMatchObject({
-      NODE_ENV: "development",
-      PORT: 3000,
-    });
-  });
-
+describe("parseWorkerEnv", () => {
   it("applies worker defaults and coerces configured values", () => {
     expect(
       parseWorkerEnv({
@@ -39,10 +30,7 @@ describe("runtime environment parsing", () => {
     });
   });
 
-  it("rejects infrastructure values missing from the worker only", () => {
-    expect(() =>
-      parseApiEnv({ DATABASE_URL: "postgresql://localhost/database" })
-    ).not.toThrow();
+  it("rejects infrastructure values missing from the worker", () => {
     expect(() =>
       parseWorkerEnv({ DATABASE_URL: "postgresql://localhost/database" })
     ).toThrow();

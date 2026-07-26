@@ -6,13 +6,6 @@ vi.mock("./s3.js", () => ({
   s3Client: { send: sendMock },
 }));
 
-vi.mock("./env.js", () => ({
-  env: {
-    S3_BUCKET: "content-bucket",
-    S3_PUBLIC_URL: "http://localhost:9000",
-  },
-}));
-
 import { S3ContentStorage } from "./upload-content-file.js";
 
 describe("S3ContentStorage", () => {

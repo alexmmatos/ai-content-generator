@@ -1,8 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import type {
-  OutboxRepository,
-  PendingOutboxEvent,
-} from "../types/outbox-repository.interface.js";
+import type { OutboxRepository } from "../types/outbox-repository.interface.js";
+import type { PendingOutboxEvent } from "../types/pending-outbox-event.interface.js";
 import { OutboxPublicationService } from "./outbox-publication.service.js";
 
 const GENERATION_EVENT: PendingOutboxEvent = {

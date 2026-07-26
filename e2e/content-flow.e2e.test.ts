@@ -6,9 +6,9 @@ import {
 } from "@aws-sdk/client-s3";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createContentQueue } from "../src/lib/content-queue.js";
-import { parseWorkerEnv } from "../src/lib/env.js";
+import { parseWorkerEnv } from "../src/lib/parse-worker-env.js";
 import { prisma } from "../src/lib/prisma.js";
-import { createRedisProducerConnection } from "../src/lib/redis.js";
+import { createRedisProducerConnection } from "../src/lib/create-redis-producer-connection.js";
 import { createS3Client } from "../src/lib/s3.js";
 
 const env = parseWorkerEnv(process.env);
