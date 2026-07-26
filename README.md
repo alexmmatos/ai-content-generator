@@ -23,8 +23,8 @@ log):
 
 | Usuário | ID | Créditos | Uso |
 |---|---|---|---|
-| Com crédito | `11111111-1111-1111-1111-111111111111` | 10 | caminho feliz |
-| Sem crédito | `22222222-2222-2222-2222-222222222222` | 0 | testar o 402 |
+| Com crédito | `297c69ca-df7a-4062-b5ce-957df31dfb82` | 10 | caminho feliz |
+| Sem crédito | `b485e014-75b7-47c7-a84a-14da3fcfaa8e` | 0 | testar o 402 |
 
 O seed também cria, sob o usuário com créditos, um `Content` de cada status (`PENDING`,
 `PROCESSING`, `COMPLETED` com uma URL real no Minio, `CANCELED`, `FAILED`) — os IDs desses

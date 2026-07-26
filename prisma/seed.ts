@@ -9,10 +9,10 @@ async function main() {
   }
 
   const userWithCredits = await prisma.user.create({
-    data: { id: "11111111-1111-1111-1111-111111111111", credits: 10 },
+    data: { id: "297c69ca-df7a-4062-b5ce-957df31dfb82", credits: 10 },
   });
   const userWithoutCredits = await prisma.user.create({
-    data: { id: "22222222-2222-2222-2222-222222222222", credits: 0 },
+    data: { id: "b485e014-75b7-47c7-a84a-14da3fcfaa8e", credits: 0 },
   });
 
   const completed = await prisma.content.create({
