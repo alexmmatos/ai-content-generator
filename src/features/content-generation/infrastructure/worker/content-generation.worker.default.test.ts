@@ -1,6 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 import type { Job, Processor } from "bullmq";
 import type { GenerateContentJobData } from "../queue/generate-content-job-data.interface.js";
+import { FakeContentRepository } from "../../test-utils/fakes/fake-content-repository.js";
+import { makeContent } from "../../test-utils/builders/make-content.js";
+import { ContentStatusService } from "../../application/content-status.service.js";
+import { createContentGenerationWorker } from "./content-generation.worker.js";
 
 const workerState = vi.hoisted(() => ({
   processor: undefined as Processor<GenerateContentJobData> | undefined,
@@ -30,11 +34,6 @@ vi.mock("bullmq", () => ({
     }
   },
 }));
-
-import { FakeContentRepository } from "../../test-utils/fakes/fake-content-repository.js";
-import { makeContent } from "../../test-utils/builders/make-content.js";
-import { ContentStatusService } from "../../application/content-status.service.js";
-import { createContentGenerationWorker } from "./content-generation.worker.js";
 
 describe("createContentGenerationWorker defaults", () => {
   it("uses the real Worker factory and console logger defaults", async () => {

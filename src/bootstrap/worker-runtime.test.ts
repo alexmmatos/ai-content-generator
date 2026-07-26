@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import type { WorkerEnv } from "../shared/env/worker-env.type.js";
+import { createOutboxListener } from "../shared/outbox/outbox-listener.js";
+import { createWorkerRuntime } from "./worker-runtime.js";
 
 const mocks = vi.hoisted(() => ({
   producerRedis: { quit: vi.fn().mockResolvedValue(undefined) },
@@ -55,9 +57,6 @@ vi.mock("../features/content-generation/infrastructure/worker/failed-content-rec
 vi.mock("../shared/outbox/outbox-listener.js", () => ({
   createOutboxListener: vi.fn(() => mocks.outboxListener),
 }));
-
-import { createOutboxListener } from "../shared/outbox/outbox-listener.js";
-import { createWorkerRuntime } from "./worker-runtime.js";
 
 const CONFIG = {
   NODE_ENV: "test",

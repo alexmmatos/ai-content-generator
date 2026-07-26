@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { createRedisProducerConnection } from "./create-redis-producer-connection.js";
 
 const redisConstructor = vi.hoisted(() => vi.fn());
 
@@ -9,8 +10,6 @@ vi.mock("ioredis", () => ({
     }
   },
 }));
-
-import { createRedisProducerConnection } from "./create-redis-producer-connection.js";
 
 describe("createRedisProducerConnection", () => {
   it("creates a fail-fast producer connection", () => {

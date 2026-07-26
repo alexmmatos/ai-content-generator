@@ -1,12 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { S3ContentStorage } from "./upload-content-file.js";
 
 const sendMock = vi.hoisted(() => vi.fn());
 
 vi.mock("./s3.js", () => ({
   s3Client: { send: sendMock },
 }));
-
-import { S3ContentStorage } from "./upload-content-file.js";
 
 describe("S3ContentStorage", () => {
   beforeEach(() => {

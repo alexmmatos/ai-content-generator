@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { PrismaOutboxRepository } from "./outbox.repository.js";
 
 const prismaMock = vi.hoisted(() => ({
   outboxEvent: {
@@ -9,8 +10,6 @@ const prismaMock = vi.hoisted(() => ({
 }));
 
 vi.mock("../db/prisma.js", () => ({ prisma: prismaMock }));
-
-import { PrismaOutboxRepository } from "./outbox.repository.js";
 
 describe("PrismaOutboxRepository", () => {
   beforeEach(() => {

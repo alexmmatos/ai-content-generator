@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { createRedisWorkerConnection } from "./create-redis-worker-connection.js";
 
 const redisConstructor = vi.hoisted(() => vi.fn());
 
@@ -9,8 +10,6 @@ vi.mock("ioredis", () => ({
     }
   },
 }));
-
-import { createRedisWorkerConnection } from "./create-redis-worker-connection.js";
 
 describe("createRedisWorkerConnection", () => {
   it("creates a BullMQ-compatible worker connection", () => {

@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { createS3Client } from "./s3.js";
 
 const s3Constructor = vi.hoisted(() => vi.fn());
 
@@ -9,8 +10,6 @@ vi.mock("@aws-sdk/client-s3", () => ({
     }
   },
 }));
-
-import { createS3Client } from "./s3.js";
 
 describe("createS3Client", () => {
   it("creates a path-style S3 client from explicit configuration", () => {

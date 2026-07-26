@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Prisma } from "@prisma/client";
+import { PrismaGenerationRequestRepository } from "./generation-request.repository.js";
+import { makeContent } from "../../test-utils/builders/make-content.js";
+import { makeUser } from "../../test-utils/builders/make-user.js";
 
 const mocks = vi.hoisted(() => {
   const tx = {
@@ -27,10 +30,6 @@ const mocks = vi.hoisted(() => {
 });
 
 vi.mock("../../../../shared/db/prisma.js", () => ({ prisma: mocks.prisma }));
-
-import { PrismaGenerationRequestRepository } from "./generation-request.repository.js";
-import { makeContent } from "../../test-utils/builders/make-content.js";
-import { makeUser } from "../../test-utils/builders/make-user.js";
 
 const INPUT = {
   requestId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",

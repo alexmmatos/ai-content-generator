@@ -1,4 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
+import { createContentQueue } from "./content-queue.js";
+import { CONTENT_QUEUE_NAME } from "./queue-name.js";
 
 const queueConstructor = vi.hoisted(() => vi.fn());
 
@@ -9,9 +11,6 @@ vi.mock("bullmq", () => ({
     }
   },
 }));
-
-import { createContentQueue } from "./content-queue.js";
-import { CONTENT_QUEUE_NAME } from "./queue-name.js";
 
 describe("content queue configuration", () => {
   it("creates a queue with deterministic retry and retention options", () => {

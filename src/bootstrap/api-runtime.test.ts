@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import type { ApiEnv } from "../shared/env/api-env.type.js";
+import { createApiRuntime } from "./api-runtime.js";
 
 const mocks = vi.hoisted(() => ({
   app: { addHook: vi.fn() },
@@ -16,8 +17,6 @@ vi.mock("../features/content-generation/infrastructure/persistence/content.repos
 vi.mock("../features/content-generation/infrastructure/persistence/generation-request.repository.js", () => ({
   PrismaGenerationRequestRepository: class {},
 }));
-
-import { createApiRuntime } from "./api-runtime.js";
 
 const CONFIG = {
   DATABASE_URL: "postgresql://localhost/database",

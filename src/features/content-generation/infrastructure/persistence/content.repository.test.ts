@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { PrismaContentRepository } from "./content.repository.js";
+import { makeContent } from "../../test-utils/builders/make-content.js";
 
 const prismaMock = vi.hoisted(() => ({
   content: {
@@ -16,9 +18,6 @@ const prismaMock = vi.hoisted(() => ({
 }));
 
 vi.mock("../../../../shared/db/prisma.js", () => ({ prisma: prismaMock }));
-
-import { PrismaContentRepository } from "./content.repository.js";
-import { makeContent } from "../../test-utils/builders/make-content.js";
 
 describe("PrismaContentRepository", () => {
   beforeEach(() => {
