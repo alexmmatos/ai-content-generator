@@ -144,7 +144,8 @@ superfície do que o mínimo do enunciado pede, mas é o preço deliberado de nu
 transição terminal por uma falha transitória do banco.
 
 **Camadas.** `routes → services → repositories`, em uma direção só. Services dependem de
-interfaces e entidades próprias em `src/domain`, sem importar tipos do Prisma. Conexões,
+interfaces em `application/ports` e de entidades em `domain`, ambos dentro de
+`src/features/content-generation`, sem importar tipos do Prisma. Conexões,
 workers e timers são criados por factories nos runtimes de bootstrap e possuem shutdown
 explícito, permitindo testar o wiring sem abrir infraestrutura durante o import.
 
