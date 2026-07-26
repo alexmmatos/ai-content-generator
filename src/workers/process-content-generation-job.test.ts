@@ -43,7 +43,6 @@ describe("processContentGenerationJob", () => {
     contents.seed(makeContent({ id: "c1", topic: "gatos", status: "PENDING" }));
 
     const simulateAiCall = vi.fn().mockImplementation(async () => {
-      // simulates /cancel being called while the worker is "waiting on the AI"
       await statusService.cancel("c1");
       return "texto gerado";
     });
@@ -51,7 +50,6 @@ describe("processContentGenerationJob", () => {
 
     await processContentGenerationJob("c1", { statusService, simulateAiCall, uploadContentFile });
 
-    // the upload still happens (no rollback), but the final DB state stays CANCELED
     expect(uploadContentFile).toHaveBeenCalled();
     expect((await statusService.getById("c1")).status).toBe("CANCELED");
   });

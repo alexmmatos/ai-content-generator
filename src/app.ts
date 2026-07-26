@@ -42,8 +42,6 @@ export function buildApp(deps: AppDependencies): FastifyInstance {
       return reply.code(404).send({ error: "User not found" });
     }
     if (error.code === "FST_ERR_VALIDATION") {
-      // fastify-type-provider-zod throws the raw ZodError (statusCode 400, code
-      // FST_ERR_VALIDATION) instead of populating Fastify's usual `error.validation`.
       return reply.code(400).send({ error: "Validation error", details: error.message });
     }
 

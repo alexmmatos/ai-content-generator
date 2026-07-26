@@ -19,8 +19,6 @@ export class ContentGenerationService {
   }): Promise<{ contentId: string; status: ContentStatus }> {
     const debited = await this.users.decrementCredits(input.userId);
     if (!debited) {
-      // decrementCredits only tells us "0 rows affected" — this lookup is just to decide
-      // which error to report, it doesn't reopen the debit race (that's already atomic).
       const user = await this.users.findById(input.userId);
       if (!user) throw new UserNotFoundError();
       throw new InsufficientCreditsError();

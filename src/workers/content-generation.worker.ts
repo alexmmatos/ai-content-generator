@@ -24,6 +24,6 @@ export const contentGenerationWorker = new Worker<GenerateContentJobData>(
 );
 
 contentGenerationWorker.on("failed", async (job) => {
-  if (!job || !shouldMarkFailed(job)) return; // still has retries left
+  if (!job || !shouldMarkFailed(job)) return;
   await statusService.markFailed(job.data.contentId);
 });

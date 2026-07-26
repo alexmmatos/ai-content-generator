@@ -9,6 +9,6 @@ export const contentQueue = new Queue<GenerateContentJobData>(CONTENT_QUEUE_NAME
     attempts: 3,
     backoff: { type: "exponential", delay: 2000 },
     removeOnComplete: true,
-    removeOnFail: false, // keeps the failed job for inspection; content already becomes FAILED in the DB
+    removeOnFail: false,
   },
 });

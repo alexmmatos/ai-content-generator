@@ -19,16 +19,10 @@ export class ContentStatusService {
     });
     if (canceled) return canceled;
 
-    // Not PENDING/PROCESSING anymore (already terminal) or doesn't exist — either way
-    // this is not a check-then-write race: the conditional update above already tried
-    // atomically. Look up the current state to answer idempotently.
     return this.getById(id);
   }
 
   async markProcessing(id: string): Promise<Content | null> {
-    // Accepting PROCESSING as a starting state (not just PENDING) is required: it's what
-    // makes a BullMQ retry (2nd+ attempt, status already PROCESSING since the 1st) not
-    // get treated as "canceled" — see spec 05.
     return this.contents.updateStatusIf(id, ["PENDING", "PROCESSING"], {
       status: "PROCESSING",
     });
