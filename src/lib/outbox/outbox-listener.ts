@@ -1,18 +1,7 @@
 import { Client } from "pg";
 import { OUTBOX_NOTIFY_CHANNEL } from "./outbox-channel.js";
-
-interface NotifyClient {
-  connect(): Promise<unknown>;
-  query(text: string): Promise<unknown>;
-  end(): Promise<unknown>;
-  on(event: "notification", listener: () => void): unknown;
-  on(event: "error", listener: (error: Error) => void): unknown;
-  on(event: "end", listener: () => void): unknown;
-}
-
-interface ListenerLogger {
-  error(message: string, context: Record<string, unknown>): void;
-}
+import type { NotifyClient } from "../../types/outbox/notify-client.interface.js";
+import type { ListenerLogger } from "../../types/outbox/listener-logger.interface.js";
 
 export function createOutboxListener(input: {
   connectionString: string;

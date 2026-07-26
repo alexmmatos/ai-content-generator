@@ -1,30 +1,9 @@
-import type { Job } from "bullmq";
 import type { ContentStatusService } from "../services/status/content-status.service.js";
-import type { GenerateContentJobData } from "../types/queue/generate-content-job-data.interface.js";
+import type { FailedJobSource } from "../types/queue/failed-job-source.interface.js";
+import type { ReconcilerLogger } from "../types/queue/reconciler-logger.interface.js";
+import type { IntervalTimer } from "../types/queue/interval-timer.interface.js";
+import { systemTimer } from "../lib/queue/system-timer.js";
 import { shouldMarkFailed } from "./should-mark-failed.js";
-
-interface FailedJobSource {
-  getJobs(
-    types: "failed"[],
-    start: number,
-    end: number,
-    asc: boolean
-  ): Promise<Array<Job<GenerateContentJobData>>>;
-}
-
-interface ReconcilerLogger {
-  error(message: string, context: Record<string, unknown>): void;
-}
-
-interface ReconcilerTimer {
-  set(callback: () => void, intervalMs: number): ReturnType<typeof setInterval>;
-  clear(handle: ReturnType<typeof setInterval>): void;
-}
-
-const systemTimer: ReconcilerTimer = {
-  set: (callback, intervalMs) => setInterval(callback, intervalMs),
-  clear: (handle) => clearInterval(handle),
-};
 
 export function createFailedContentReconciler(input: {
   queue: FailedJobSource;
@@ -32,7 +11,7 @@ export function createFailedContentReconciler(input: {
   intervalMs?: number;
   batchSize?: number;
   logger?: ReconcilerLogger;
-  timer?: ReconcilerTimer;
+  timer?: IntervalTimer;
 }): {
   start(): void;
   reconcileNow(): Promise<void>;

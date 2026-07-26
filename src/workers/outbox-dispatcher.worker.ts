@@ -1,24 +1,13 @@
 import type { PendingOutboxPublisher } from "../types/outbox/pending-outbox-publisher.interface.js";
-
-interface DispatcherLogger {
-  error(message: string, error: unknown): void;
-}
-
-interface DispatcherTimer {
-  set(callback: () => void, intervalMs: number): ReturnType<typeof setInterval>;
-  clear(handle: ReturnType<typeof setInterval>): void;
-}
-
-const systemTimer: DispatcherTimer = {
-  set: (callback, intervalMs) => setInterval(callback, intervalMs),
-  clear: (handle) => clearInterval(handle),
-};
+import type { DispatcherLogger } from "../types/outbox/dispatcher-logger.interface.js";
+import type { IntervalTimer } from "../types/queue/interval-timer.interface.js";
+import { systemTimer } from "../lib/queue/system-timer.js";
 
 export function createOutboxDispatcher(input: {
   publisher: PendingOutboxPublisher;
   intervalMs?: number;
   logger?: DispatcherLogger;
-  timer?: DispatcherTimer;
+  timer?: IntervalTimer;
 }): {
   start(): void;
   dispatchNow(): Promise<void>;

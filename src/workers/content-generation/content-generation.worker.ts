@@ -1,29 +1,14 @@
-import {
-  Worker,
-  type ConnectionOptions,
-  type Processor,
-  type WorkerOptions,
-} from "bullmq";
+import { Worker, type ConnectionOptions } from "bullmq";
 import { CONTENT_QUEUE_NAME } from "../../lib/queue/queue-name.js";
 import type { ContentStatusService } from "../../services/status/content-status.service.js";
 import type { ContentStorage } from "../../types/storage/content-storage.interface.js";
 import type { ContentWorker } from "../../types/queue/content-worker.interface.js";
-import type { GenerateContentJobData } from "../../types/queue/generate-content-job-data.interface.js";
+import type { WorkerLogger } from "../../types/queue/worker-logger.interface.js";
+import type { WorkerFactory } from "../../types/queue/worker-factory.type.js";
 import { simulateAiCall as defaultSimulateAiCall } from "./default-simulate-ai-call.js";
 import { shouldMarkFailed } from "../should-mark-failed.js";
 import { processContentGenerationJob } from "./process-content-generation-job.js";
 import { processContentCleanupJob } from "./process-content-cleanup-job.js";
-
-interface WorkerLogger {
-  info(message: string, context: Record<string, unknown>): void;
-  error(message: string, context: Record<string, unknown>): void;
-}
-
-type WorkerFactory = (
-  name: string,
-  processor: Processor<GenerateContentJobData>,
-  options: WorkerOptions
-) => ContentWorker;
 
 const consoleLogger: WorkerLogger = {
   info: (message, context) => console.log(message, context),
