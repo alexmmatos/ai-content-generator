@@ -10,7 +10,18 @@ export class FakeContentRepository implements ContentRepository {
     return this;
   }
 
-  async create(input: { userId: string; topic: string }): Promise<Content> {
+  findByRequestIdSync(requestId: string): Content | null {
+    return (
+      [...this.contents.values()].find((content) => content.requestId === requestId) ?? null
+    );
+  }
+
+  async create(input: {
+    requestId: string;
+    requestHash: string;
+    userId: string;
+    topic: string;
+  }): Promise<Content> {
     const content = makeContent(input);
     this.contents.set(content.id, content);
     return content;

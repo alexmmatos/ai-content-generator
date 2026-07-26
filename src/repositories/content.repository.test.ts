@@ -23,13 +23,20 @@ describe("PrismaContentRepository", () => {
     prismaMock.content.create.mockResolvedValue(content);
 
     const result = await new PrismaContentRepository().create({
+      requestId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      requestHash: "hash",
       userId: "user-1",
       topic: "gatos",
     });
 
     expect(result).toBe(content);
     expect(prismaMock.content.create).toHaveBeenCalledWith({
-      data: { userId: "user-1", topic: "gatos" },
+      data: {
+        requestId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        requestHash: "hash",
+        userId: "user-1",
+        topic: "gatos",
+      },
     });
   });
 

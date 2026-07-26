@@ -2,7 +2,11 @@ import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { s3Client } from "./s3.js";
 import { env } from "./env.js";
 
-export async function uploadContentFile(contentId: string, text: string): Promise<string> {
+export async function uploadContentFile(
+  contentId: string,
+  text: string,
+  requestId: string
+): Promise<string> {
   const key = `content/${contentId}.txt`;
 
   await s3Client.send(
@@ -11,6 +15,9 @@ export async function uploadContentFile(contentId: string, text: string): Promis
       Key: key,
       Body: text,
       ContentType: "text/plain",
+      Metadata: {
+        "request-id": requestId,
+      },
     })
   );
 

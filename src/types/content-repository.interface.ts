@@ -1,7 +1,12 @@
 import type { Content, ContentStatus } from "@prisma/client";
 
 export interface ContentRepository {
-  create(input: { userId: string; topic: string }): Promise<Content>;
+  create(input: {
+    requestId: string;
+    requestHash: string;
+    userId: string;
+    topic: string;
+  }): Promise<Content>;
   findById(id: string): Promise<Content | null>;
   updateStatusIf(
     id: string,

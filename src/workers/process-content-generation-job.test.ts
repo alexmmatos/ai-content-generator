@@ -4,6 +4,8 @@ import { ContentStatusService } from "../services/content-status.service.js";
 import { FakeContentRepository } from "../test-utils/fake-content-repository.js";
 import { makeContent } from "../test-utils/make-content.js";
 
+const REQUEST_ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+
 describe("processContentGenerationJob", () => {
   it("happy path: PENDING -> PROCESSING -> COMPLETED with the uploaded resultUrl", async () => {
     const contents = new FakeContentRepository();
@@ -13,10 +15,14 @@ describe("processContentGenerationJob", () => {
     const simulateAiCall = vi.fn().mockResolvedValue("texto gerado");
     const uploadContentFile = vi.fn().mockResolvedValue("http://minio/x.txt");
 
-    await processContentGenerationJob("c1", { statusService, simulateAiCall, uploadContentFile });
+    await processContentGenerationJob("c1", REQUEST_ID, {
+      statusService,
+      simulateAiCall,
+      uploadContentFile,
+    });
 
     expect(simulateAiCall).toHaveBeenCalledWith("gatos");
-    expect(uploadContentFile).toHaveBeenCalledWith("c1", "texto gerado");
+    expect(uploadContentFile).toHaveBeenCalledWith("c1", "texto gerado", REQUEST_ID);
     const final = await statusService.getById("c1");
     expect(final.status).toBe("COMPLETED");
     expect(final.resultUrl).toBe("http://minio/x.txt");
@@ -30,7 +36,11 @@ describe("processContentGenerationJob", () => {
     const simulateAiCall = vi.fn();
     const uploadContentFile = vi.fn();
 
-    await processContentGenerationJob("c1", { statusService, simulateAiCall, uploadContentFile });
+    await processContentGenerationJob("c1", REQUEST_ID, {
+      statusService,
+      simulateAiCall,
+      uploadContentFile,
+    });
 
     expect(simulateAiCall).not.toHaveBeenCalled();
     expect(uploadContentFile).not.toHaveBeenCalled();
@@ -47,7 +57,7 @@ describe("processContentGenerationJob", () => {
       const simulateAiCall = vi.fn();
       const uploadContentFile = vi.fn();
 
-      await processContentGenerationJob("c1", {
+      await processContentGenerationJob("c1", REQUEST_ID, {
         statusService,
         simulateAiCall,
         uploadContentFile,
@@ -70,7 +80,11 @@ describe("processContentGenerationJob", () => {
     });
     const uploadContentFile = vi.fn().mockResolvedValue("http://minio/x.txt");
 
-    await processContentGenerationJob("c1", { statusService, simulateAiCall, uploadContentFile });
+    await processContentGenerationJob("c1", REQUEST_ID, {
+      statusService,
+      simulateAiCall,
+      uploadContentFile,
+    });
 
     expect(uploadContentFile).toHaveBeenCalled();
     expect((await statusService.getById("c1")).status).toBe("CANCELED");
@@ -85,7 +99,11 @@ describe("processContentGenerationJob", () => {
     const uploadContentFile = vi.fn();
 
     await expect(
-      processContentGenerationJob("c1", { statusService, simulateAiCall, uploadContentFile })
+      processContentGenerationJob("c1", REQUEST_ID, {
+        statusService,
+        simulateAiCall,
+        uploadContentFile,
+      })
     ).rejects.toThrow("AI unavailable");
 
     expect(uploadContentFile).not.toHaveBeenCalled();
@@ -101,7 +119,11 @@ describe("processContentGenerationJob", () => {
     const uploadContentFile = vi.fn().mockRejectedValue(new Error("S3 unavailable"));
 
     await expect(
-      processContentGenerationJob("c1", { statusService, simulateAiCall, uploadContentFile })
+      processContentGenerationJob("c1", REQUEST_ID, {
+        statusService,
+        simulateAiCall,
+        uploadContentFile,
+      })
     ).rejects.toThrow("S3 unavailable");
 
     expect((await statusService.getById("c1")).status).toBe("PROCESSING");
@@ -118,7 +140,7 @@ describe("processContentGenerationJob", () => {
       return "http://minio/result.txt";
     });
 
-    await processContentGenerationJob("c1", {
+    await processContentGenerationJob("c1", REQUEST_ID, {
       statusService,
       simulateAiCall,
       uploadContentFile,

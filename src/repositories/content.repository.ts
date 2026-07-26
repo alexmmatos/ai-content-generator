@@ -3,7 +3,12 @@ import type { ContentRepository } from "../types/content-repository.interface.js
 import { prisma } from "../lib/prisma.js";
 
 export class PrismaContentRepository implements ContentRepository {
-  async create(input: { userId: string; topic: string }): Promise<Content> {
+  async create(input: {
+    requestId: string;
+    requestHash: string;
+    userId: string;
+    topic: string;
+  }): Promise<Content> {
     return prisma.content.create({ data: input });
   }
 

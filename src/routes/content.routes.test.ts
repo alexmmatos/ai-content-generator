@@ -1,38 +1,52 @@
 import { describe, it, expect, vi } from "vitest";
-import type { Queue } from "bullmq";
 import { buildApp } from "../app.js";
 import { ContentGenerationService } from "../services/content-generation.service.js";
 import { ContentStatusService } from "../services/content-status.service.js";
-import type { GenerateContentJobData } from "../types/generate-content-job-data.interface.js";
 import { FakeUserRepository } from "../test-utils/fake-user-repository.js";
 import { FakeContentRepository } from "../test-utils/fake-content-repository.js";
-import { FakeQueue } from "../test-utils/fake-queue.js";
+import { FakeGenerationRequestRepository } from "../test-utils/fake-generation-request-repository.js";
 import { makeUser } from "../test-utils/make-user.js";
 import { makeContent } from "../test-utils/make-content.js";
 
 function buildTestApp() {
   const users = new FakeUserRepository();
   const contents = new FakeContentRepository();
-  const queue = new FakeQueue();
+  const requests = new FakeGenerationRequestRepository(users, contents);
 
   const app = buildApp({
-    contentGenerationService: new ContentGenerationService(
-      users,
-      contents,
-      queue as unknown as Queue<GenerateContentJobData>
-    ),
+    contentGenerationService: new ContentGenerationService(requests),
     contentStatusService: new ContentStatusService(contents),
   });
 
-  return { app, users, contents, queue };
+  return { app, users, contents, requests };
 }
 
 const USER_ID = "11111111-1111-1111-1111-111111111111";
 const CONTENT_ID = "22222222-2222-2222-2222-222222222222";
 
 describe("POST /api/content/generate", () => {
-  it("returns 201 with a PENDING content id and enqueues the job", async () => {
-    const { app, users, queue } = buildTestApp();
+  it("uses a supplied request-id and returns it with the PENDING content", async () => {
+    const { app, users } = buildTestApp();
+    users.seed(makeUser({ id: USER_ID, credits: 1 }));
+    const requestId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+
+    const response = await app.inject({
+      method: "POST",
+      url: "/api/content/generate",
+      headers: { "request-id": requestId },
+      payload: { topic: "gatos", userId: USER_ID },
+    });
+
+    expect(response.statusCode).toBe(201);
+    expect(response.headers["request-id"]).toBe(requestId);
+    expect(response.json()).toMatchObject({ requestId, status: "PENDING" });
+    expect(response.json().contentId).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
+    );
+  });
+
+  it("generates and returns a request-id when the header is absent", async () => {
+    const { app, users } = buildTestApp();
     users.seed(makeUser({ id: USER_ID, credits: 1 }));
 
     const response = await app.inject({
@@ -42,16 +56,71 @@ describe("POST /api/content/generate", () => {
     });
 
     expect(response.statusCode).toBe(201);
-    expect(response.json()).toMatchObject({ status: "PENDING" });
-    expect(response.json().contentId).toMatch(
+    expect(response.json().requestId).toBe(response.headers["request-id"]);
+    expect(response.json().requestId).toMatch(
       /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
     );
-    expect(queue.jobs).toEqual([
-      {
-        name: "generate-content",
-        data: { contentId: response.json().contentId },
-      },
-    ]);
+  });
+
+  it("returns 400 for an invalid request-id header", async () => {
+    const { app, users } = buildTestApp();
+    users.seed(makeUser({ id: USER_ID, credits: 1 }));
+
+    const response = await app.inject({
+      method: "POST",
+      url: "/api/content/generate",
+      headers: { "request-id": "invalid" },
+      payload: { topic: "gatos", userId: USER_ID },
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect((await users.findById(USER_ID))?.credits).toBe(1);
+  });
+
+  it("replays the same request-id without debiting again", async () => {
+    const { app, users } = buildTestApp();
+    users.seed(makeUser({ id: USER_ID, credits: 2 }));
+    const requestId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+    const request = {
+      method: "POST" as const,
+      url: "/api/content/generate",
+      headers: { "request-id": requestId },
+      payload: { topic: "gatos", userId: USER_ID },
+    };
+
+    const first = await app.inject(request);
+    const replay = await app.inject(request);
+
+    expect(replay.statusCode).toBe(201);
+    expect(replay.json()).toEqual(first.json());
+    expect(replay.headers["request-replayed"]).toBe("true");
+    expect((await users.findById(USER_ID))?.credits).toBe(1);
+  });
+
+  it("returns 409 when a request-id is reused with another payload", async () => {
+    const { app, users } = buildTestApp();
+    users.seed(makeUser({ id: USER_ID, credits: 2 }));
+    const headers = {
+      "request-id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    };
+
+    await app.inject({
+      method: "POST",
+      url: "/api/content/generate",
+      headers,
+      payload: { topic: "gatos", userId: USER_ID },
+    });
+    const conflict = await app.inject({
+      method: "POST",
+      url: "/api/content/generate",
+      headers,
+      payload: { topic: "cachorros", userId: USER_ID },
+    });
+
+    expect(conflict.statusCode).toBe(409);
+    expect(conflict.json()).toEqual({
+      error: "Request ID already used with a different payload",
+    });
   });
 
   it.each([
@@ -85,7 +154,7 @@ describe("POST /api/content/generate", () => {
   });
 
   it("rejects a topic over the 500 character limit without debiting credit", async () => {
-    const { app, users, queue } = buildTestApp();
+    const { app, users } = buildTestApp();
     users.seed(makeUser({ id: USER_ID, credits: 1 }));
 
     const response = await app.inject({
@@ -96,23 +165,6 @@ describe("POST /api/content/generate", () => {
 
     expect(response.statusCode).toBe(400);
     expect((await users.findById(USER_ID))?.credits).toBe(1);
-    expect(queue.jobs).toHaveLength(0);
-  });
-
-  it("returns a generic 500 response when the queue fails, without leaking the cause", async () => {
-    const { app, users, queue } = buildTestApp();
-    users.seed(makeUser({ id: USER_ID, credits: 1 }));
-    vi.spyOn(queue, "add").mockRejectedValue(new Error("redis://secret-host unavailable"));
-
-    const response = await app.inject({
-      method: "POST",
-      url: "/api/content/generate",
-      payload: { topic: "gatos", userId: USER_ID },
-    });
-
-    expect(response.statusCode).toBe(500);
-    expect(response.json()).toEqual({ error: "Internal Server Error" });
-    expect(response.body).not.toContain("secret-host");
   });
 
   it("returns 402 when the user has no credits", async () => {
@@ -141,6 +193,20 @@ describe("POST /api/content/generate", () => {
     expect(response.statusCode).toBe(404);
     expect(response.json()).toEqual({ error: "User not found" });
   });
+
+  it("returns 500 when an unexpected dependency error occurs", async () => {
+    const { app, requests } = buildTestApp();
+    vi.spyOn(requests, "create").mockRejectedValueOnce(new Error("database unavailable"));
+
+    const response = await app.inject({
+      method: "POST",
+      url: "/api/content/generate",
+      payload: { topic: "gatos", userId: USER_ID },
+    });
+
+    expect(response.statusCode).toBe(500);
+    expect(response.json()).toEqual({ error: "Internal Server Error" });
+  });
 });
 
 describe("GET /api/content/:id", () => {
@@ -168,6 +234,7 @@ describe("GET /api/content/:id", () => {
     expect(response.statusCode).toBe(200);
     expect(response.json()).toEqual({
       id: CONTENT_ID,
+      requestId: expect.any(String),
       userId: USER_ID,
       topic: "gatos",
       status: "COMPLETED",

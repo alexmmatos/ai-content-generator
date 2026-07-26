@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import Fastify, { type FastifyInstance } from "fastify";
 import swagger from "@fastify/swagger";
 import swaggerUi from "@fastify/swagger-ui";
@@ -12,12 +13,29 @@ import type { AppDependencies } from "./types/app-dependencies.type.js";
 import { InsufficientCreditsError } from "./services/insufficient-credits.error.js";
 import { ContentNotFoundError } from "./services/content-not-found.error.js";
 import { UserNotFoundError } from "./services/user-not-found.error.js";
+import { RequestIdConflictError } from "./services/request-id-conflict.error.js";
+
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export function buildApp(deps: AppDependencies): FastifyInstance {
-  const app = Fastify({ logger: true }).withTypeProvider<ZodTypeProvider>();
+  const app = Fastify({
+    logger: true,
+    requestIdHeader: false,
+    genReqId(rawRequest) {
+      const received = rawRequest.headers["request-id"];
+      return typeof received === "string" && UUID_PATTERN.test(received)
+        ? received
+        : randomUUID();
+    },
+  }).withTypeProvider<ZodTypeProvider>();
 
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
+
+  app.addHook("onSend", async (request, reply) => {
+    reply.header("request-id", request.id);
+  });
 
   app.register(swagger, {
     openapi: {
@@ -40,6 +58,11 @@ export function buildApp(deps: AppDependencies): FastifyInstance {
     }
     if (error instanceof UserNotFoundError) {
       return reply.code(404).send({ error: "User not found" });
+    }
+    if (error instanceof RequestIdConflictError) {
+      return reply
+        .code(409)
+        .send({ error: "Request ID already used with a different payload" });
     }
     if (error.code === "FST_ERR_VALIDATION") {
       return reply.code(400).send({ error: "Validation error", details: error.message });

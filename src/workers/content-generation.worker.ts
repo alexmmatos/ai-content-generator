@@ -14,7 +14,12 @@ const statusService = new ContentStatusService(new PrismaContentRepository());
 export const contentGenerationWorker = new Worker<GenerateContentJobData>(
   CONTENT_QUEUE_NAME,
   async (job) => {
-    await processContentGenerationJob(job.data.contentId, {
+    console.log("Processing content generation", {
+      requestId: job.data.requestId,
+      contentId: job.data.contentId,
+      jobId: job.id,
+    });
+    await processContentGenerationJob(job.data.contentId, job.data.requestId, {
       statusService,
       simulateAiCall,
       uploadContentFile,
@@ -25,5 +30,10 @@ export const contentGenerationWorker = new Worker<GenerateContentJobData>(
 
 contentGenerationWorker.on("failed", async (job) => {
   if (!job || !shouldMarkFailed(job)) return;
+  console.error("Content generation exhausted retries", {
+    requestId: job.data.requestId,
+    contentId: job.data.contentId,
+    jobId: job.id,
+  });
   await statusService.markFailed(job.data.contentId);
 });

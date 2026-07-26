@@ -2,6 +2,7 @@ import type { ProcessJobDeps } from "../types/process-job-deps.interface.js";
 
 export async function processContentGenerationJob(
   contentId: string,
+  requestId: string,
   deps: ProcessJobDeps
 ): Promise<void> {
   const processing = await deps.statusService.markProcessing(contentId);
@@ -9,7 +10,7 @@ export async function processContentGenerationJob(
 
   const text = await deps.simulateAiCall(processing.topic);
 
-  const resultUrl = await deps.uploadContentFile(contentId, text);
+  const resultUrl = await deps.uploadContentFile(contentId, text, requestId);
 
   await deps.statusService.markCompleted(contentId, resultUrl);
 }

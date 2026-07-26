@@ -22,7 +22,11 @@ describe("uploadContentFile", () => {
   });
 
   it("uploads a text file under the content id and returns its public URL", async () => {
-    const result = await uploadContentFile("content-1", "texto gerado");
+    const result = await uploadContentFile(
+      "content-1",
+      "texto gerado",
+      "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+    );
 
     expect(result).toBe(
       "http://localhost:9000/content-bucket/content/content-1.txt"
@@ -35,6 +39,9 @@ describe("uploadContentFile", () => {
       Key: "content/content-1.txt",
       Body: "texto gerado",
       ContentType: "text/plain",
+      Metadata: {
+        "request-id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      },
     });
   });
 });

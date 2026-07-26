@@ -1,33 +1,60 @@
+import { createHash } from "node:crypto";
 import type { ContentStatus } from "@prisma/client";
-import type { Queue } from "bullmq";
-import type { UserRepository } from "../types/user-repository.interface.js";
-import type { ContentRepository } from "../types/content-repository.interface.js";
-import type { GenerateContentJobData } from "../types/generate-content-job-data.interface.js";
+import type { GenerationRequestRepository } from "../types/generation-request-repository.interface.js";
 import { InsufficientCreditsError } from "./insufficient-credits.error.js";
+import { RequestIdConflictError } from "./request-id-conflict.error.js";
 import { UserNotFoundError } from "./user-not-found.error.js";
 
 export class ContentGenerationService {
-  constructor(
-    private users: UserRepository,
-    private contents: ContentRepository,
-    private queue: Queue<GenerateContentJobData>
-  ) {}
+  constructor(private requests: GenerationRequestRepository) {}
 
   async generate(input: {
+    requestId: string;
     userId: string;
     topic: string;
-  }): Promise<{ contentId: string; status: ContentStatus }> {
-    const debited = await this.users.decrementCredits(input.userId);
-    if (!debited) {
-      const user = await this.users.findById(input.userId);
-      if (!user) throw new UserNotFoundError();
-      throw new InsufficientCreditsError();
+  }): Promise<{
+    requestId: string;
+    contentId: string;
+    status: ContentStatus;
+    replayed: boolean;
+  }> {
+    const requestHash = createGenerationRequestHash(input);
+    const result = await this.requests.create({ ...input, requestHash });
+
+    if (result.kind === "user_not_found") throw new UserNotFoundError();
+    if (result.kind === "insufficient_credits") throw new InsufficientCreditsError();
+
+    if (result.kind === "duplicate") {
+      if (result.content.requestHash !== requestHash) throw new RequestIdConflictError();
+      return {
+        requestId: result.content.requestId,
+        contentId: result.content.id,
+        status: "PENDING",
+        replayed: true,
+      };
     }
 
-    const content = await this.contents.create(input);
-
-    await this.queue.add("generate-content", { contentId: content.id });
-
-    return { contentId: content.id, status: content.status };
+    return {
+      requestId: result.content.requestId,
+      contentId: result.content.id,
+      status: result.content.status,
+      replayed: false,
+    };
   }
+}
+
+export function createGenerationRequestHash(input: {
+  requestId?: string;
+  userId: string;
+  topic: string;
+}): string {
+  return createHash("sha256")
+    .update(
+      JSON.stringify({
+        operation: "content.generate.v1",
+        userId: input.userId,
+        topic: input.topic,
+      })
+    )
+    .digest("hex");
 }
