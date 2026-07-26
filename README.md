@@ -9,10 +9,10 @@ Minio (S3-compatível).
 
 ```bash
 cp .env.example .env
-docker-compose up --build
+docker compose up --build
 ```
 
-A API sobe em `http://localhost:3000`. O `docker-compose up` também sobe o worker, o
+A API sobe em `http://localhost:3000`. O `docker compose up` também sobe o worker, o
 Postgres, o Redis e o Minio — não é preciso ter Node instalado no host, nem rodar `npm
 install` fora do container.
 
@@ -61,7 +61,7 @@ concorrência, e um conteúdo cancelado que nunca volta a `COMPLETED` — inclus
 retry do BullMQ após a falha simulada da IA (~20% de chance por tentativa).
 
 ```bash
-docker-compose up -d postgres   # precisa de um Postgres real de pé
+docker compose up -d postgres   # precisa de um Postgres real de pé
 npm run test:integration
 ```
 
