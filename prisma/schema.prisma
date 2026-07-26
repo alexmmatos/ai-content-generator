@@ -20,19 +20,19 @@ model User {
   id        String    @id @default(uuid())
   credits   Int       @default(3)
   contents  Content[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
 }
 
 model Content {
   id        String        @id @default(uuid())
-  userId    String
+  userId    String        @map("user_id")
   user      User          @relation(fields: [userId], references: [id])
   topic     String
   status    ContentStatus @default(PENDING)
-  resultUrl String?
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
+  resultUrl String?       @map("result_url")
+  createdAt DateTime      @default(now()) @map("created_at")
+  updatedAt DateTime      @updatedAt @map("updated_at")
 
   @@index([userId])
 }
