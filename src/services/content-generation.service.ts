@@ -1,8 +1,8 @@
 import type { ContentStatus } from "@prisma/client";
 import type { Queue } from "bullmq";
-import type { UserRepository } from "../types/user-repository.js";
-import type { ContentRepository } from "../types/content-repository.js";
-import type { GenerateContentJobData } from "../types/generate-content-job-data.js";
+import type { UserRepository } from "../types/user-repository.interface.js";
+import type { ContentRepository } from "../types/content-repository.interface.js";
+import type { GenerateContentJobData } from "../types/generate-content-job-data.interface.js";
 import { InsufficientCreditsError } from "./insufficient-credits.error.js";
 import { UserNotFoundError } from "./user-not-found.error.js";
 

@@ -1,5 +1,5 @@
 import type { Content, ContentStatus } from "@prisma/client";
-import type { ContentRepository } from "../types/content-repository.js";
+import type { ContentRepository } from "../types/content-repository.interface.js";
 import { prisma } from "../lib/prisma.js";
 
 export class PrismaContentRepository implements ContentRepository {

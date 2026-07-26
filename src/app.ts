@@ -8,7 +8,7 @@ import {
   type ZodTypeProvider,
 } from "fastify-type-provider-zod";
 import { createContentRoutes } from "./routes/content.routes.js";
-import type { AppDependencies } from "./types/app-dependencies.js";
+import type { AppDependencies } from "./types/app-dependencies.type.js";
 import { InsufficientCreditsError } from "./services/insufficient-credits.error.js";
 import { ContentNotFoundError } from "./services/content-not-found.error.js";
 import { UserNotFoundError } from "./services/user-not-found.error.js";

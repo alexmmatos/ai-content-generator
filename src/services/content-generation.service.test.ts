@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import type { Queue } from "bullmq";
 import { ContentGenerationService } from "./content-generation.service.js";
-import type { GenerateContentJobData } from "../types/generate-content-job-data.js";
+import type { GenerateContentJobData } from "../types/generate-content-job-data.interface.js";
 import { InsufficientCreditsError } from "./insufficient-credits.error.js";
 import { UserNotFoundError } from "./user-not-found.error.js";
 import { FakeUserRepository } from "../test-utils/fake-user-repository.js";

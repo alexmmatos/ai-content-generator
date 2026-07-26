@@ -1,4 +1,4 @@
-import type { ProcessJobDeps } from "../types/process-job-deps.js";
+import type { ProcessJobDeps } from "../types/process-job-deps.interface.js";
 
 /** The worker's actual job-processing steps, pulled out of `content-generation.worker.ts`
  *  so they're testable with fakes/stubs — importing that file connects to Redis as a side

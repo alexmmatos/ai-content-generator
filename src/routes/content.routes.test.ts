@@ -3,7 +3,7 @@ import type { Queue } from "bullmq";
 import { buildApp } from "../app.js";
 import { ContentGenerationService } from "../services/content-generation.service.js";
 import { ContentStatusService } from "../services/content-status.service.js";
-import type { GenerateContentJobData } from "../types/generate-content-job-data.js";
+import type { GenerateContentJobData } from "../types/generate-content-job-data.interface.js";
 import { FakeUserRepository } from "../test-utils/fake-user-repository.js";
 import { FakeContentRepository } from "../test-utils/fake-content-repository.js";
 import { FakeQueue } from "../test-utils/fake-queue.js";

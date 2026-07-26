@@ -1,5 +1,5 @@
 import type { User } from "@prisma/client";
-import type { UserRepository } from "../types/user-repository.js";
+import type { UserRepository } from "../types/user-repository.interface.js";
 import { prisma } from "../lib/prisma.js";
 
 export class PrismaUserRepository implements UserRepository {

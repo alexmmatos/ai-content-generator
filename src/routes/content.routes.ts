@@ -5,7 +5,7 @@ import { ContentIdParamSchema } from "../schemas/content-id-param.schema.js";
 import { ContentResponseSchema } from "../schemas/content-response.schema.js";
 import { CancelContentResponseSchema } from "../schemas/cancel-content-response.schema.js";
 import { ErrorResponseSchema } from "../schemas/error-response.schema.js";
-import type { ContentRoutesDependencies } from "../types/content-routes-dependencies.js";
+import type { ContentRoutesDependencies } from "../types/content-routes-dependencies.interface.js";
 
 export function createContentRoutes(deps: ContentRoutesDependencies): FastifyPluginAsyncZod {
   return async (app) => {

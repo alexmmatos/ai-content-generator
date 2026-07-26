@@ -1,5 +1,5 @@
 import type { Content, ContentStatus } from "@prisma/client";
-import type { ContentRepository } from "../types/content-repository.js";
+import type { ContentRepository } from "../types/content-repository.interface.js";
 import { makeContent } from "./make-content.js";
 
 export class FakeContentRepository implements ContentRepository {
