@@ -1,0 +1,23 @@
+services:
+  postgres:
+    ports: !override
+      - "55432:5432"
+
+  redis:
+    ports: !override
+      - "56379:6379"
+
+  minio:
+    ports: !override
+      - "59000:9000"
+      - "59001:9001"
+
+  api:
+    environment:
+      S3_PUBLIC_URL: http://localhost:59000
+    ports: !override
+      - "3100:3000"
+
+  worker:
+    environment:
+      SIMULATED_AI_FAILURE_RATE: "0"

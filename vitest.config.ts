@@ -2,22 +2,27 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   test: {
-    exclude: ["**/node_modules/**", "**/dist/**", "**/*.integration.test.ts"],
+    exclude: [
+      "**/node_modules/**",
+      "**/dist/**",
+      "**/*.integration.test.ts",
+      "**/*.e2e.test.ts",
+    ],
     coverage: {
       provider: "v8",
       reporter: ["text", "html", "json"],
-      include: [
-        "src/app.ts",
-        "src/routes/**/*.ts",
-        "src/schemas/**/*.ts",
-        "src/services/**/*.ts",
-        "src/repositories/**/*.ts",
-        "src/lib/upload-content-file.ts",
-        "src/workers/process-content-generation-job.ts",
-        "src/workers/should-mark-failed.ts",
-        "src/workers/simulate-ai-call.ts",
+      include: ["src/**/*.ts"],
+      exclude: [
+        "**/*.test.ts",
+        "**/*.integration.test.ts",
+        "**/*.interface.ts",
+        "**/*.type.ts",
+        "src/server.ts",
+        "src/worker.ts",
+        "src/shared/db/prisma.ts",
+        "src/features/content-generation/test-utils/**",
+        "src/features/content-generation/domain/user.ts",
       ],
-      exclude: ["**/*.test.ts", "**/*.integration.test.ts"],
       thresholds: {
         statements: 100,
         branches: 100,

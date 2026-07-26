@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    "src/**/*.ts",
+    "e2e/**/*.ts",
+    "prisma/**/*.ts",
+    "vitest.config.ts",
+    "vitest.integration.config.ts",
+    "vitest.e2e.config.ts"
+  ]
+}

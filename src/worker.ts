@@ -1,4 +1,15 @@
-import { env } from "./lib/env.js";
-import "./workers/content-generation.worker.js";
+import { createWorkerRuntime } from "./bootstrap/worker-runtime.js";
+import { parseWorkerEnv } from "./shared/env/parse-worker-env.js";
+import { CONTENT_QUEUE_NAME } from "./features/content-generation/infrastructure/queue/queue-name.js";
 
-console.log(`Worker listening on queue "content-generation" (NODE_ENV=${env.NODE_ENV})`);
+const env = parseWorkerEnv(process.env);
+const runtime = createWorkerRuntime(env);
+runtime.start();
+
+console.log(
+  `Worker listening on queue "${CONTENT_QUEUE_NAME}" (NODE_ENV=${env.NODE_ENV})`
+);
+
+for (const signal of ["SIGINT", "SIGTERM"] as const) {
+  process.once(signal, () => void runtime.close());
+}

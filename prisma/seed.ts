@@ -1,5 +1,5 @@
-import { prisma } from "../src/lib/prisma.js";
-import { uploadContentFile } from "../src/lib/upload-content-file.js";
+import { randomUUID } from "node:crypto";
+import { prisma } from "../src/shared/db/prisma.js";
 
 async function main() {
   const existing = await prisma.user.findFirst();
@@ -16,20 +16,49 @@ async function main() {
   });
 
   const completed = await prisma.content.create({
-    data: { userId: userWithCredits.id, topic: "conteúdo já concluído", status: "COMPLETED" },
+    data: {
+      requestId: randomUUID(),
+      requestHash: "seed",
+      userId: userWithCredits.id,
+      topic: "conteúdo já concluído",
+      status: "COMPLETED",
+    },
   });
-  const resultUrl = await uploadContentFile(
-    completed.id,
-    `Conteúdo gerado sobre "${completed.topic}" (seed).`
-  );
-  await prisma.content.update({ where: { id: completed.id }, data: { resultUrl } });
+  await prisma.content.update({
+    where: { id: completed.id },
+    data: { resultUrl: "https://example.com/seed-content.txt" },
+  });
 
   await prisma.content.createMany({
     data: [
-      { userId: userWithCredits.id, topic: "conteúdo pendente", status: "PENDING" },
-      { userId: userWithCredits.id, topic: "conteúdo em processamento", status: "PROCESSING" },
-      { userId: userWithCredits.id, topic: "conteúdo cancelado", status: "CANCELED" },
-      { userId: userWithCredits.id, topic: "conteúdo com falha", status: "FAILED" },
+      {
+        requestId: randomUUID(),
+        requestHash: "seed",
+        userId: userWithCredits.id,
+        topic: "conteúdo pendente",
+        status: "PENDING",
+      },
+      {
+        requestId: randomUUID(),
+        requestHash: "seed",
+        userId: userWithCredits.id,
+        topic: "conteúdo em processamento",
+        status: "PROCESSING",
+      },
+      {
+        requestId: randomUUID(),
+        requestHash: "seed",
+        userId: userWithCredits.id,
+        topic: "conteúdo cancelado",
+        status: "CANCELED",
+      },
+      {
+        requestId: randomUUID(),
+        requestHash: "seed",
+        userId: userWithCredits.id,
+        topic: "conteúdo com falha",
+        status: "FAILED",
+      },
     ],
   });
 
@@ -38,11 +67,15 @@ async function main() {
   console.log(`Seed: content seeded for user ${userWithCredits.id} covering PENDING, PROCESSING, COMPLETED, CANCELED and FAILED`);
 }
 
-main()
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
-  })
-  .finally(async () => {
+async function run(): Promise<void> {
+  try {
+    await main();
+  } catch (error) {
+    console.error(error);
+    process.exitCode = 1;
+  } finally {
     await prisma.$disconnect();
-  });
+  }
+}
+
+void run();
