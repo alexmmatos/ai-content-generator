@@ -16,6 +16,56 @@ describe("ContentStatusService.getById", () => {
   });
 });
 
+describe("ContentStatusService status transitions", () => {
+  it("transitions PROCESSING to COMPLETED and saves the result URL", async () => {
+    const { contents, service } = buildService();
+    contents.seed(makeContent({ id: "c1", status: "PROCESSING" }));
+
+    const completed = await service.markCompleted("c1", "http://example.com/result.txt");
+
+    expect(completed).toMatchObject({
+      status: "COMPLETED",
+      resultUrl: "http://example.com/result.txt",
+    });
+  });
+
+  it("does not transition a terminal COMPLETED content to FAILED", async () => {
+    const { contents, service } = buildService();
+    contents.seed(
+      makeContent({
+        id: "c1",
+        status: "COMPLETED",
+        resultUrl: "http://example.com/result.txt",
+      })
+    );
+
+    expect(await service.markFailed("c1")).toBeNull();
+    expect(await service.getById("c1")).toMatchObject({
+      status: "COMPLETED",
+      resultUrl: "http://example.com/result.txt",
+    });
+  });
+
+  it.each(["COMPLETED", "CANCELED", "FAILED"] as const)(
+    "does not move terminal status %s back to PROCESSING",
+    async (status) => {
+      const { contents, service } = buildService();
+      contents.seed(makeContent({ id: "c1", status }));
+
+      expect(await service.markProcessing("c1")).toBeNull();
+      expect((await service.getById("c1")).status).toBe(status);
+    }
+  );
+
+  it("returns null when the worker receives an unknown content id", async () => {
+    const { service } = buildService();
+
+    expect(await service.markProcessing("missing")).toBeNull();
+    expect(await service.markCompleted("missing", "http://example.com/result.txt")).toBeNull();
+    expect(await service.markFailed("missing")).toBeNull();
+  });
+});
+
 describe("ContentStatusService retry-vs-cancel guard", () => {
   it("markProcessing called twice in a row (simulated BullMQ retry) returns PROCESSING both times, never null", async () => {
     const { contents, service } = buildService();
@@ -65,6 +115,12 @@ describe("ContentStatusService retry-vs-cancel guard", () => {
 });
 
 describe("ContentStatusService.cancel idempotency", () => {
+  it("throws ContentNotFoundError when canceling an unknown id", async () => {
+    const { service } = buildService();
+
+    await expect(service.cancel("missing")).rejects.toThrow(ContentNotFoundError);
+  });
+
   it("cancel called twice does not throw and stays CANCELED", async () => {
     const { contents, service } = buildService();
     contents.seed(makeContent({ id: "c1", status: "PENDING" }));
@@ -93,5 +149,23 @@ describe("ContentStatusService.cancel idempotency", () => {
     const result = await service.cancel("c1");
 
     expect(result.status).toBe("FAILED");
+  });
+
+  it("preserves the result URL when cancel is attempted after completion", async () => {
+    const { contents, service } = buildService();
+    contents.seed(
+      makeContent({
+        id: "c1",
+        status: "COMPLETED",
+        resultUrl: "http://example.com/result.txt",
+      })
+    );
+
+    const result = await service.cancel("c1");
+
+    expect(result).toMatchObject({
+      status: "COMPLETED",
+      resultUrl: "http://example.com/result.txt",
+    });
   });
 });

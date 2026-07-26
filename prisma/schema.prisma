@@ -14,6 +14,8 @@ enum ContentStatus {
   COMPLETED
   CANCELED
   FAILED
+
+  @@map("content_status")
 }
 
 model User {
