@@ -46,14 +46,33 @@ Swagger/OpenAPI gerado automaticamente a partir dos schemas Zod, disponível em
 
 | Método | Rota                          | Descrição                                              |
 |--------|-------------------------------|---------------------------------------------------------|
-| POST   | `/api/content/generate`       | Debita 1 crédito, cria o conteúdo (`PENDING`) e enfileira o job |
+| POST   | `/api/content/generate`       | Debita 1 crédito, cria o conteúdo (`PENDING`) e publica o job via outbox |
 | GET    | `/api/content/:id`            | Status, dados originais e URL do resultado (se concluído)  |
 | POST   | `/api/content/:id/cancel`     | Cancela a geração (idempotente)                          |
+
+### `request-id` e idempotência
+
+`POST /api/content/generate` aceita um UUID no header opcional `request-id`. O mesmo valor
+é devolvido no header e no corpo da resposta, persistido com o conteúdo, enviado no job do
+BullMQ, incluído nos logs do worker e gravado nos metadados do objeto no S3.
+
+```bash
+curl -i -X POST http://localhost:3000/api/content/generate \
+  -H 'content-type: application/json' \
+  -H 'request-id: aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' \
+  -d '{"topic":"gatos","userId":"297c69ca-df7a-4062-b5ce-957df31dfb82"}'
+```
+
+Repetir o mesmo `request-id` com o mesmo payload retorna o mesmo `contentId`, não debita
+outro crédito e inclui `request-replayed: true`. Reutilizá-lo com outro `topic` ou
+`userId` retorna `409`. Sem o header, a API gera um UUID automaticamente; para que um retry
+após timeout seja idempotente, o cliente deve gerar e reutilizar seu próprio UUID.
 
 ## Testes
 
 ```bash
 npm test
+npm run test:coverage
 ```
 
 Cobre as duas garantias centrais do desafio: débito de crédito sem duplicação sob
@@ -72,10 +91,19 @@ uma corrida real entre conexões.
 
 ## Decisões arquiteturais
 
-**Crédito (concorrência).** O débito de crédito é uma única query condicional —
-`UPDATE users SET credits = credits - 1 WHERE id = ? AND credits > 0` — em vez de um
+**Crédito, idempotência e outbox (concorrência).** Criação do conteúdo, débito condicional
+e criação do evento de outbox ocorrem na mesma transação. O `request_id` possui índice
+único e o débito usa uma única query condicional —
+`UPDATE "user" SET credits = credits - 1 WHERE id = ? AND credits > 0` — em vez de um
 `SELECT` seguido de `UPDATE`. Duas requisições concorrentes com 1 crédito disponível nunca
-debitam as duas: a segunda `UPDATE` afeta 0 linhas e falha com `InsufficientCreditsError`.
+debitam as duas, e replays concorrentes da mesma requisição convergem para o mesmo conteúdo.
+Se qualquer etapa falhar, tudo sofre rollback.
+
+**Publicação confiável.** A API não tenta coordenar PostgreSQL e Redis com duas operações
+independentes. Um dispatcher no worker lê eventos pendentes da tabela `outbox_event`,
+publica no BullMQ usando o `request-id` como `jobId` e só então marca o evento como
+publicado. Se o Redis estiver indisponível, o evento permanece pendente e será tentado
+novamente; a deduplicação do BullMQ torna uma repetição segura.
 
 **Corrida worker vs. `/cancel`.** Toda escrita de status (do worker e da rota de
 cancelamento) passa por um único primitivo condicional,
