@@ -17,12 +17,17 @@ Postgres, o Redis e o Minio — não é preciso ter Node instalado no host, nem 
 install` fora do container.
 
 O container `api` aplica as migrations (`prisma migrate deploy`) e roda o seed
-(`prisma db seed`) automaticamente antes de subir o servidor. O seed cria um usuário de teste
-com 10 créditos; o `userId` gerado aparece no log do container:
+(`prisma db seed`) automaticamente antes de subir o servidor. Os IDs gerados aparecem no log
+do container:
 
 ```bash
 docker compose logs api | grep "Seed:"
 ```
+
+O seed cria dois usuários (um com 10 créditos, outro com 0 — pronto pra testar o 402) e um
+conteúdo de cada status (`PENDING`, `PROCESSING`, `COMPLETED` com uma URL real no Minio,
+`CANCELED`, `FAILED`) sob o usuário com créditos, pra dar pra testar `GET`/`cancel` sem
+depender do worker rodar (5s + ~20% de chance de falha) toda vez.
 
 Use esse `userId` para testar `POST /api/content/generate`.
 

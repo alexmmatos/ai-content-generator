@@ -1,14 +1,37 @@
 import { prisma } from "../src/lib/prisma.js";
+import { uploadContentFile } from "../src/lib/upload-content-file.js";
 
 async function main() {
   const existing = await prisma.user.findFirst();
   if (existing) {
-    console.log(`Seed: user already exists (${existing.id}), skipping.`);
+    console.log(`Seed: data already exists (user ${existing.id}), skipping.`);
     return;
   }
 
-  const user = await prisma.user.create({ data: { credits: 10 } });
-  console.log(`Seed: created default user ${user.id} with ${user.credits} credits.`);
+  const userWithCredits = await prisma.user.create({ data: { credits: 10 } });
+  const userWithoutCredits = await prisma.user.create({ data: { credits: 0 } });
+
+  const completed = await prisma.content.create({
+    data: { userId: userWithCredits.id, topic: "conteúdo já concluído", status: "COMPLETED" },
+  });
+  const resultUrl = await uploadContentFile(
+    completed.id,
+    `Conteúdo gerado sobre "${completed.topic}" (seed).`
+  );
+  await prisma.content.update({ where: { id: completed.id }, data: { resultUrl } });
+
+  await prisma.content.createMany({
+    data: [
+      { userId: userWithCredits.id, topic: "conteúdo pendente", status: "PENDING" },
+      { userId: userWithCredits.id, topic: "conteúdo em processamento", status: "PROCESSING" },
+      { userId: userWithCredits.id, topic: "conteúdo cancelado", status: "CANCELED" },
+      { userId: userWithCredits.id, topic: "conteúdo com falha", status: "FAILED" },
+    ],
+  });
+
+  console.log(`Seed: user with credits: ${userWithCredits.id} (${userWithCredits.credits} credits)`);
+  console.log(`Seed: user without credits: ${userWithoutCredits.id} (0 credits)`);
+  console.log(`Seed: content seeded for user ${userWithCredits.id} covering PENDING, PROCESSING, COMPLETED, CANCELED and FAILED`);
 }
 
 main()
