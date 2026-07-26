@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { prisma } from "../src/lib/prisma.js";
+import { prisma } from "../src/shared/db/prisma.js";
 
 async function main() {
   const existing = await prisma.user.findFirst();

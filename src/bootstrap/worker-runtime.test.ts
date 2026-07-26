@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import type { WorkerEnv } from "../types/env/worker-env.type.js";
+import type { WorkerEnv } from "../shared/env/worker-env.type.js";
 
 const mocks = vi.hoisted(() => ({
   producerRedis: { quit: vi.fn().mockResolvedValue(undefined) },
@@ -19,44 +19,44 @@ const mocks = vi.hoisted(() => ({
   disconnect: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock("../lib/redis/create-redis-producer-connection.js", () => ({
+vi.mock("../shared/redis/create-redis-producer-connection.js", () => ({
   createRedisProducerConnection: vi.fn(() => mocks.producerRedis),
 }));
-vi.mock("../lib/redis/create-redis-worker-connection.js", () => ({
+vi.mock("../shared/redis/create-redis-worker-connection.js", () => ({
   createRedisWorkerConnection: vi.fn(() => mocks.workerRedis),
 }));
-vi.mock("../lib/queue/content-queue.js", () => ({
+vi.mock("../features/content-generation/infrastructure/queue/content-queue.js", () => ({
   createContentQueue: vi.fn(() => mocks.queue),
 }));
-vi.mock("../lib/storage/s3.js", () => ({
+vi.mock("../features/content-generation/infrastructure/storage/s3.js", () => ({
   createS3Client: vi.fn(() => ({})),
 }));
-vi.mock("../lib/prisma.js", () => ({
+vi.mock("../shared/db/prisma.js", () => ({
   prisma: { $disconnect: mocks.disconnect },
 }));
-vi.mock("../lib/storage/upload-content-file.js", () => ({
+vi.mock("../features/content-generation/infrastructure/storage/upload-content-file.js", () => ({
   S3ContentStorage: class {},
 }));
-vi.mock("../repositories/content.repository.js", () => ({
+vi.mock("../features/content-generation/infrastructure/persistence/content.repository.js", () => ({
   PrismaContentRepository: class {},
 }));
-vi.mock("../repositories/outbox.repository.js", () => ({
+vi.mock("../shared/outbox/outbox.repository.js", () => ({
   PrismaOutboxRepository: class {},
 }));
-vi.mock("../workers/content-generation/content-generation.worker.js", () => ({
+vi.mock("../features/content-generation/infrastructure/worker/content-generation.worker.js", () => ({
   createContentGenerationWorker: vi.fn(() => mocks.worker),
 }));
-vi.mock("../workers/outbox-dispatcher.worker.js", () => ({
+vi.mock("../shared/outbox/outbox-dispatcher.worker.js", () => ({
   createOutboxDispatcher: vi.fn(() => mocks.dispatcher),
 }));
-vi.mock("../workers/failed-content-reconciler.worker.js", () => ({
+vi.mock("../features/content-generation/infrastructure/worker/failed-content-reconciler.worker.js", () => ({
   createFailedContentReconciler: vi.fn(() => mocks.reconciler),
 }));
-vi.mock("../lib/outbox/outbox-listener.js", () => ({
+vi.mock("../shared/outbox/outbox-listener.js", () => ({
   createOutboxListener: vi.fn(() => mocks.outboxListener),
 }));
 
-import { createOutboxListener } from "../lib/outbox/outbox-listener.js";
+import { createOutboxListener } from "../shared/outbox/outbox-listener.js";
 import { createWorkerRuntime } from "./worker-runtime.js";
 
 const CONFIG = {

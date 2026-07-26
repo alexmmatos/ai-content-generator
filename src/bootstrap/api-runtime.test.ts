@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import type { ApiEnv } from "../types/env/api-env.type.js";
+import type { ApiEnv } from "../shared/env/api-env.type.js";
 
 const mocks = vi.hoisted(() => ({
   app: { addHook: vi.fn() },
@@ -7,13 +7,13 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("../app.js", () => ({ buildApp: vi.fn(() => mocks.app) }));
-vi.mock("../lib/prisma.js", () => ({
+vi.mock("../shared/db/prisma.js", () => ({
   prisma: { $disconnect: mocks.disconnect },
 }));
-vi.mock("../repositories/content.repository.js", () => ({
+vi.mock("../features/content-generation/infrastructure/persistence/content.repository.js", () => ({
   PrismaContentRepository: class {},
 }));
-vi.mock("../repositories/generation-request.repository.js", () => ({
+vi.mock("../features/content-generation/infrastructure/persistence/generation-request.repository.js", () => ({
   PrismaGenerationRequestRepository: class {},
 }));
 

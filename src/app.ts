@@ -8,13 +8,13 @@ import {
   jsonSchemaTransform,
   type ZodTypeProvider,
 } from "fastify-type-provider-zod";
-import { createContentRoutes } from "./routes/content.routes.js";
-import type { AppDependencies } from "./types/app/app-dependencies.type.js";
-import type { BuildAppOptions } from "./types/app/build-app-options.interface.js";
-import { InsufficientCreditsError } from "./services/generation/insufficient-credits.error.js";
-import { ContentNotFoundError } from "./services/status/content-not-found.error.js";
-import { UserNotFoundError } from "./services/generation/user-not-found.error.js";
-import { RequestIdConflictError } from "./services/generation/request-id-conflict.error.js";
+import { createContentRoutes } from "./features/content-generation/api/content.routes.js";
+import type { AppDependencies } from "./app-dependencies.type.js";
+import type { BuildAppOptions } from "./build-app-options.interface.js";
+import { InsufficientCreditsError } from "./features/content-generation/domain/errors/insufficient-credits.error.js";
+import { ContentNotFoundError } from "./features/content-generation/domain/errors/content-not-found.error.js";
+import { UserNotFoundError } from "./features/content-generation/domain/errors/user-not-found.error.js";
+import { RequestIdConflictError } from "./features/content-generation/domain/errors/request-id-conflict.error.js";
 
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;

@@ -1,8 +1,8 @@
 import { DeleteObjectCommand, HeadObjectCommand } from "@aws-sdk/client-s3";
 import { afterAll, describe, expect, it } from "vitest";
-import { parseWorkerEnv } from "../src/lib/env/parse-worker-env.js";
-import { prisma } from "../src/lib/prisma.js";
-import { createS3Client } from "../src/lib/storage/s3.js";
+import { parseWorkerEnv } from "../src/shared/env/parse-worker-env.js";
+import { prisma } from "../src/shared/db/prisma.js";
+import { createS3Client } from "../src/features/content-generation/infrastructure/storage/s3.js";
 
 const phase = process.env.E2E_INDEPENDENCE_PHASE;
 const apiUrl = process.env.E2E_API_URL ?? "http://localhost:3100";

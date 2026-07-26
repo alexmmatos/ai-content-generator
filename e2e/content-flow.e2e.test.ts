@@ -5,11 +5,11 @@ import {
   HeadObjectCommand,
 } from "@aws-sdk/client-s3";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { createContentQueue } from "../src/lib/queue/content-queue.js";
-import { parseWorkerEnv } from "../src/lib/env/parse-worker-env.js";
-import { prisma } from "../src/lib/prisma.js";
-import { createRedisProducerConnection } from "../src/lib/redis/create-redis-producer-connection.js";
-import { createS3Client } from "../src/lib/storage/s3.js";
+import { createContentQueue } from "../src/features/content-generation/infrastructure/queue/content-queue.js";
+import { parseWorkerEnv } from "../src/shared/env/parse-worker-env.js";
+import { prisma } from "../src/shared/db/prisma.js";
+import { createRedisProducerConnection } from "../src/shared/redis/create-redis-producer-connection.js";
+import { createS3Client } from "../src/features/content-generation/infrastructure/storage/s3.js";
 
 const env = parseWorkerEnv(process.env);
 

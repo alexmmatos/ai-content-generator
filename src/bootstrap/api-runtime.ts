@@ -1,11 +1,11 @@
 import type { FastifyInstance } from "fastify";
 import { buildApp } from "../app.js";
-import type { ApiEnv } from "../types/env/api-env.type.js";
-import { prisma } from "../lib/prisma.js";
-import { PrismaContentRepository } from "../repositories/content.repository.js";
-import { PrismaGenerationRequestRepository } from "../repositories/generation-request.repository.js";
-import { ContentGenerationService } from "../services/generation/content-generation.service.js";
-import { ContentStatusService } from "../services/status/content-status.service.js";
+import type { ApiEnv } from "../shared/env/api-env.type.js";
+import { prisma } from "../shared/db/prisma.js";
+import { PrismaContentRepository } from "../features/content-generation/infrastructure/persistence/content.repository.js";
+import { PrismaGenerationRequestRepository } from "../features/content-generation/infrastructure/persistence/generation-request.repository.js";
+import { ContentGenerationService } from "../features/content-generation/application/generate-content.service.js";
+import { ContentStatusService } from "../features/content-generation/application/content-status.service.js";
 
 export function createApiRuntime(_config: ApiEnv): FastifyInstance {
   const contentRepository = new PrismaContentRepository();

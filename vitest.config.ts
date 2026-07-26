@@ -15,12 +15,13 @@ export default defineConfig({
       exclude: [
         "**/*.test.ts",
         "**/*.integration.test.ts",
+        "**/*.interface.ts",
+        "**/*.type.ts",
         "src/server.ts",
         "src/worker.ts",
-        "src/lib/prisma.ts",
-        "src/test-utils/**",
-        "src/types/**",
-        "src/domain/user.ts",
+        "src/shared/db/prisma.ts",
+        "src/features/content-generation/test-utils/**",
+        "src/features/content-generation/domain/user.ts",
       ],
       thresholds: {
         statements: 100,
