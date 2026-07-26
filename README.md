@@ -17,19 +17,25 @@ Postgres, o Redis e o Minio — não é preciso ter Node instalado no host, nem 
 install` fora do container.
 
 O container `api` aplica as migrations (`prisma migrate deploy`) e roda o seed
-(`prisma db seed`) automaticamente antes de subir o servidor. Os IDs gerados aparecem no log
-do container:
+(`prisma db seed`) automaticamente antes de subir o servidor, criando dois usuários com IDs
+fixos (prontos pra usar em `POST /api/content/generate` sem precisar consultar o banco ou o
+log):
+
+| Usuário | ID | Créditos | Uso |
+|---|---|---|---|
+| Com crédito | `11111111-1111-1111-1111-111111111111` | 10 | caminho feliz |
+| Sem crédito | `22222222-2222-2222-2222-222222222222` | 0 | testar o 402 |
+
+O seed também cria, sob o usuário com créditos, um `Content` de cada status (`PENDING`,
+`PROCESSING`, `COMPLETED` com uma URL real no Minio, `CANCELED`, `FAILED`) — os IDs desses
+são aleatórios, aparecem no log:
 
 ```bash
 docker compose logs api | grep "Seed:"
 ```
 
-O seed cria dois usuários (um com 10 créditos, outro com 0 — pronto pra testar o 402) e um
-conteúdo de cada status (`PENDING`, `PROCESSING`, `COMPLETED` com uma URL real no Minio,
-`CANCELED`, `FAILED`) sob o usuário com créditos, pra dar pra testar `GET`/`cancel` sem
-depender do worker rodar (5s + ~20% de chance de falha) toda vez.
-
-Use esse `userId` para testar `POST /api/content/generate`.
+Isso dá pra testar `GET /api/content/:id` e `POST /api/content/:id/cancel` contra todos os
+estados sem depender do worker rodar de verdade (5s + ~20% de chance de falha por chamada).
 
 ## Documentação
 

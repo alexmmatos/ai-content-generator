@@ -8,8 +8,12 @@ async function main() {
     return;
   }
 
-  const userWithCredits = await prisma.user.create({ data: { credits: 10 } });
-  const userWithoutCredits = await prisma.user.create({ data: { credits: 0 } });
+  const userWithCredits = await prisma.user.create({
+    data: { id: "11111111-1111-1111-1111-111111111111", credits: 10 },
+  });
+  const userWithoutCredits = await prisma.user.create({
+    data: { id: "22222222-2222-2222-2222-222222222222", credits: 0 },
+  });
 
   const completed = await prisma.content.create({
     data: { userId: userWithCredits.id, topic: "conteúdo já concluído", status: "COMPLETED" },
