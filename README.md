@@ -97,6 +97,85 @@ A integração prova transação/rollback concorrente, três tentativas reais, r
 aceita pedidos com worker/Redis/Minio parados e que o worker os conclui com a API parada,
 além de replay, download, metadados e ausência de objeto órfão.
 
+## Diagramas
+
+**Visão geral dos componentes.** A API só fala com o PostgreSQL; é o dispatcher da outbox,
+não a API, quem publica no Redis. O worker nunca aceita `CANCELED` como origem de
+`COMPLETED`/`FAILED` (ver diagrama de corrida abaixo).
+
+```mermaid
+graph LR
+  C[Cliente] -->|POST /generate<br/>GET /:id<br/>POST /:id/cancel| A[Fastify API]
+  A -->|1 transação: crédito + content<br/>+ outbox_event + pg_notify| DB[(PostgreSQL)]
+  DB -.->|LISTEN/NOTIFY| D[Outbox Dispatcher]
+  DB -.->|poll de segurança<br/>a cada 1s| D
+  D -->|enqueue, jobId = request-id| R[(Redis / BullMQ)]
+  R --> W[Content Worker]
+  W -->|upload .txt| M[(Minio / S3)]
+  W -->|status final| DB
+  RC[Failed Reconciler] -.->|backstop se DB caiu<br/>no listener de falha| DB
+```
+
+**Caminho feliz: gerar e processar.**
+
+```mermaid
+sequenceDiagram
+  participant C as Cliente
+  participant A as API
+  participant DB as PostgreSQL
+  participant Disp as Outbox Dispatcher
+  participant Q as Redis/BullMQ
+  participant W as Worker
+  participant S as Minio/S3
+
+  C->>A: POST /api/content/generate
+  A->>DB: TX — debita crédito (UPDATE ... WHERE credits > 0)<br/>+ INSERT content (PENDING) + INSERT outbox_event<br/>+ pg_notify(canal)
+  DB-->>A: commit
+  A-->>C: 201 { contentId, status: PENDING }
+  DB--)Disp: NOTIFY acorda o dispatcher
+  Disp->>DB: SELECT eventos pendentes
+  Disp->>Q: enqueue job (jobId = request-id)
+  Q->>W: entrega o job
+  W->>DB: UPDATE status = PROCESSING
+  W->>W: IA simulada (~5s, ~20% falha por tentativa)
+  alt sucesso
+    W->>S: upload do .txt
+    W->>DB: UPDATE status = COMPLETED, url
+  else esgotou as 3 tentativas
+    W->>DB: UPDATE status = FAILED
+  end
+  C->>A: GET /api/content/:id (poll)
+  A->>DB: SELECT status
+  A-->>C: status atual
+```
+
+**Corrida: cancelamento vs. conclusão do worker.** Decidida pelo relógio do próprio
+PostgreSQL, não pelo relógio da aplicação.
+
+```mermaid
+sequenceDiagram
+  participant C as Cliente
+  participant A as API
+  participant DB as PostgreSQL
+  participant W as Worker
+
+  par corrida concorrente
+    C->>A: POST /:id/cancel
+    A->>DB: UPDATE cancellation_requested_at = clock_timestamp()<br/>WHERE cancellation_requested_at IS NULL
+  and
+    W->>DB: UPDATE terminal_at = clock_timestamp(), status = COMPLETED<br/>WHERE ainda não terminal
+  end
+  Note over DB: compara cancellation_requested_at vs terminal_at
+  alt cancelamento começou antes (<=)
+    DB-->>A: status final = CANCELED
+    A->>DB: outbox: CONTENT_CANCELLATION_REQUESTED
+    Note over W: cleanup idempotente no S3,<br/>remove objeto se o worker já tinha gravado
+  else conclusão já era anterior
+    DB-->>W: UPDATE de cancelamento não aplica (no-op)
+    Note over A: resposta do cancel: canceled = false
+  end
+```
+
 ## Decisões arquiteturais
 
 **Crédito, idempotência e outbox (concorrência).** Criação do conteúdo, débito condicional
@@ -143,11 +222,34 @@ pollers de background no worker (dispatcher da outbox + reconciliador de `FAILED
 superfície do que o mínimo do enunciado pede, mas é o preço deliberado de nunca perder uma
 transição terminal por uma falha transitória do banco.
 
-**Camadas.** `routes → services → repositories`, em uma direção só. Services dependem de
-interfaces em `application/ports` e de entidades em `domain`, ambos dentro de
-`src/features/content-generation`, sem importar tipos do Prisma. Conexões,
-workers e timers são criados por factories nos runtimes de bootstrap e possuem shutdown
-explícito, permitindo testar o wiring sem abrir infraestrutura durante o import.
+**Estrutura de pastas (Feature-First + Clean Architecture).** Todo o domínio de geração de
+conteúdo mora em `src/features/content-generation`, em camadas concêntricas — a dependência
+só aponta para dentro, nunca o contrário:
+
+```
+src/features/content-generation/
+  domain/         Content, User, erros de domínio — zero dependência externa
+  application/    services (regras de negócio) + ports/ (interfaces implementadas pela infra)
+  infrastructure/ Prisma, BullMQ, S3, outbox — implementa os ports
+  api/            rotas Fastify + schemas Zod — só conversa com application
+  test-utils/     fakes e builders usados pelos testes
+src/shared/       env, Redis, outbox (mecanismo), scheduling, db — sem regra de negócio
+src/bootstrap/    monta as dependências concretas (Prisma, Redis reais) para API e worker
+```
+
+`domain` e `application` nunca importam tipos do Prisma Client: `application/ports` declara
+as interfaces (`ContentRepository`, `ContentJobQueue`, `ContentStorage`, ...) e
+`infrastructure` é quem as implementa. Isso é o que permite testar `services` inteiramente
+com fakes em memória (`test-utils/fakes`), sem subir Postgres/Redis/Minio nos testes unitários.
+
+Optou-se por um único bounded context (não vários módulos em `features/`) porque o domínio
+inteiro — geração, status e cancelamento de conteúdo — gira em torno de uma única entidade
+(`Content`) com um único ciclo de vida; dividir isso em múltiplos contextos seria separação
+artificial para o tamanho real do problema.
+
+Conexões, workers e timers são criados por factories nos runtimes de bootstrap
+(`src/bootstrap`) e possuem shutdown explícito, permitindo testar o wiring sem abrir
+infraestrutura durante o import.
 
 As imagens usadas no Compose estão fixadas por digest:
 
