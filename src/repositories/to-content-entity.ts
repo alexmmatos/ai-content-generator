@@ -1,5 +1,5 @@
 import type { Content } from "@prisma/client";
-import type { ContentEntity } from "../domain/content.js";
+import type { ContentEntity } from "../domain/content/content.js";
 
 export function toContentEntity(content: Content): ContentEntity {
   return {

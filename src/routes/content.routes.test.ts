@@ -1,12 +1,12 @@
 import { describe, it, expect, vi } from "vitest";
 import { buildApp } from "../app.js";
-import { ContentGenerationService } from "../services/content-generation.service.js";
-import { ContentStatusService } from "../services/content-status.service.js";
-import { FakeUserRepository } from "../test-utils/fake-user-repository.js";
-import { FakeContentRepository } from "../test-utils/fake-content-repository.js";
-import { FakeGenerationRequestRepository } from "../test-utils/fake-generation-request-repository.js";
-import { makeUser } from "../test-utils/make-user.js";
-import { makeContent } from "../test-utils/make-content.js";
+import { ContentGenerationService } from "../services/generation/content-generation.service.js";
+import { ContentStatusService } from "../services/status/content-status.service.js";
+import { FakeUserRepository } from "../test-utils/fakes/fake-user-repository.js";
+import { FakeContentRepository } from "../test-utils/fakes/fake-content-repository.js";
+import { FakeGenerationRequestRepository } from "../test-utils/fakes/fake-generation-request-repository.js";
+import { makeUser } from "../test-utils/builders/make-user.js";
+import { makeContent } from "../test-utils/builders/make-content.js";
 
 function buildTestApp(options: { logger?: boolean } = { logger: false }) {
   const users = new FakeUserRepository();

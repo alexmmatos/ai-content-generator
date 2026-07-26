@@ -1,9 +1,9 @@
 import { Prisma, type Content } from "@prisma/client";
 import { prisma } from "../lib/prisma.js";
-import { OUTBOX_NOTIFY_CHANNEL } from "../lib/outbox-channel.js";
+import { OUTBOX_NOTIFY_CHANNEL } from "../lib/outbox/outbox-channel.js";
 import { toContentEntity } from "./to-content-entity.js";
-import type { GenerationRequestRepository } from "../types/generation-request-repository.interface.js";
-import type { CreateGenerationRequestResult } from "../types/create-generation-request-result.type.js";
+import type { GenerationRequestRepository } from "../types/repositories/generation-request-repository.interface.js";
+import type { CreateGenerationRequestResult } from "../types/repositories/create-generation-request-result.type.js";
 
 class InsufficientCreditsPersistenceError extends Error {}
 

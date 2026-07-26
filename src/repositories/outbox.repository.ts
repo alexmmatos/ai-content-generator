@@ -1,6 +1,6 @@
 import { prisma } from "../lib/prisma.js";
-import type { OutboxRepository } from "../types/outbox-repository.interface.js";
-import type { PendingOutboxEvent } from "../types/pending-outbox-event.interface.js";
+import type { OutboxRepository } from "../types/outbox/outbox-repository.interface.js";
+import type { PendingOutboxEvent } from "../types/outbox/pending-outbox-event.interface.js";
 
 export class PrismaOutboxRepository implements OutboxRepository {
   async findPending(limit: number): Promise<PendingOutboxEvent[]> {

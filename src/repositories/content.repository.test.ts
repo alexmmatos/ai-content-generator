@@ -18,7 +18,7 @@ const prismaMock = vi.hoisted(() => ({
 vi.mock("../lib/prisma.js", () => ({ prisma: prismaMock }));
 
 import { PrismaContentRepository } from "./content.repository.js";
-import { makeContent } from "../test-utils/make-content.js";
+import { makeContent } from "../test-utils/builders/make-content.js";
 
 describe("PrismaContentRepository", () => {
   beforeEach(() => {

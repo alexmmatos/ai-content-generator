@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import type { ApiEnv } from "../types/api-env.type.js";
+import type { ApiEnv } from "../types/env/api-env.type.js";
 
 const mocks = vi.hoisted(() => ({
   app: { addHook: vi.fn() },

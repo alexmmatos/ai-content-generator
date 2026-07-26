@@ -1,9 +1,9 @@
 import { Prisma } from "@prisma/client";
-import type { ContentEntity } from "../domain/content.js";
-import type { ContentStatus } from "../domain/content-status.js";
-import type { ContentRepository } from "../types/content-repository.interface.js";
+import type { ContentEntity } from "../domain/content/content.js";
+import type { ContentStatus } from "../domain/content/content-status.js";
+import type { ContentRepository } from "../types/repositories/content-repository.interface.js";
 import { prisma } from "../lib/prisma.js";
-import { OUTBOX_NOTIFY_CHANNEL } from "../lib/outbox-channel.js";
+import { OUTBOX_NOTIFY_CHANNEL } from "../lib/outbox/outbox-channel.js";
 import { toContentEntity } from "./to-content-entity.js";
 
 export class PrismaContentRepository implements ContentRepository {

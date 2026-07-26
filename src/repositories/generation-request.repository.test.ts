@@ -29,8 +29,8 @@ const mocks = vi.hoisted(() => {
 vi.mock("../lib/prisma.js", () => ({ prisma: mocks.prisma }));
 
 import { PrismaGenerationRequestRepository } from "./generation-request.repository.js";
-import { makeContent } from "../test-utils/make-content.js";
-import { makeUser } from "../test-utils/make-user.js";
+import { makeContent } from "../test-utils/builders/make-content.js";
+import { makeUser } from "../test-utils/builders/make-user.js";
 
 const INPUT = {
   requestId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",

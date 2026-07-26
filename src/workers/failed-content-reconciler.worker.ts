@@ -1,6 +1,6 @@
 import type { Job } from "bullmq";
-import type { ContentStatusService } from "../services/content-status.service.js";
-import type { GenerateContentJobData } from "../types/generate-content-job-data.interface.js";
+import type { ContentStatusService } from "../services/status/content-status.service.js";
+import type { GenerateContentJobData } from "../types/queue/generate-content-job-data.interface.js";
 import { shouldMarkFailed } from "./should-mark-failed.js";
 
 interface FailedJobSource {

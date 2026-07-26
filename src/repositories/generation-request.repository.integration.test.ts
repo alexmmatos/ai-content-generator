@@ -1,7 +1,7 @@
 import { describe, it, expect, afterAll } from "vitest";
 import { randomUUID } from "node:crypto";
 import { prisma } from "../lib/prisma.js";
-import { createGenerationRequestHash } from "../services/create-generation-request-hash.js";
+import { createGenerationRequestHash } from "../services/generation/create-generation-request-hash.js";
 import { PrismaGenerationRequestRepository } from "./generation-request.repository.js";
 
 describe("PrismaGenerationRequestRepository transaction (real Postgres)", () => {

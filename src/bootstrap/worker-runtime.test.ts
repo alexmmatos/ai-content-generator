@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import type { WorkerEnv } from "../types/worker-env.type.js";
+import type { WorkerEnv } from "../types/env/worker-env.type.js";
 
 const mocks = vi.hoisted(() => ({
   producerRedis: { quit: vi.fn().mockResolvedValue(undefined) },
@@ -19,22 +19,22 @@ const mocks = vi.hoisted(() => ({
   disconnect: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock("../lib/create-redis-producer-connection.js", () => ({
+vi.mock("../lib/redis/create-redis-producer-connection.js", () => ({
   createRedisProducerConnection: vi.fn(() => mocks.producerRedis),
 }));
-vi.mock("../lib/create-redis-worker-connection.js", () => ({
+vi.mock("../lib/redis/create-redis-worker-connection.js", () => ({
   createRedisWorkerConnection: vi.fn(() => mocks.workerRedis),
 }));
-vi.mock("../lib/content-queue.js", () => ({
+vi.mock("../lib/queue/content-queue.js", () => ({
   createContentQueue: vi.fn(() => mocks.queue),
 }));
-vi.mock("../lib/s3.js", () => ({
+vi.mock("../lib/storage/s3.js", () => ({
   createS3Client: vi.fn(() => ({})),
 }));
 vi.mock("../lib/prisma.js", () => ({
   prisma: { $disconnect: mocks.disconnect },
 }));
-vi.mock("../lib/upload-content-file.js", () => ({
+vi.mock("../lib/storage/upload-content-file.js", () => ({
   S3ContentStorage: class {},
 }));
 vi.mock("../repositories/content.repository.js", () => ({
@@ -43,7 +43,7 @@ vi.mock("../repositories/content.repository.js", () => ({
 vi.mock("../repositories/outbox.repository.js", () => ({
   PrismaOutboxRepository: class {},
 }));
-vi.mock("../workers/content-generation.worker.js", () => ({
+vi.mock("../workers/content-generation/content-generation.worker.js", () => ({
   createContentGenerationWorker: vi.fn(() => mocks.worker),
 }));
 vi.mock("../workers/outbox-dispatcher.worker.js", () => ({
@@ -52,11 +52,11 @@ vi.mock("../workers/outbox-dispatcher.worker.js", () => ({
 vi.mock("../workers/failed-content-reconciler.worker.js", () => ({
   createFailedContentReconciler: vi.fn(() => mocks.reconciler),
 }));
-vi.mock("../lib/outbox-listener.js", () => ({
+vi.mock("../lib/outbox/outbox-listener.js", () => ({
   createOutboxListener: vi.fn(() => mocks.outboxListener),
 }));
 
-import { createOutboxListener } from "../lib/outbox-listener.js";
+import { createOutboxListener } from "../lib/outbox/outbox-listener.js";
 import { createWorkerRuntime } from "./worker-runtime.js";
 
 const CONFIG = {

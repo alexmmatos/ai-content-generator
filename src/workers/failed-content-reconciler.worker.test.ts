@@ -1,9 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Job } from "bullmq";
-import { FakeContentRepository } from "../test-utils/fake-content-repository.js";
-import { makeContent } from "../test-utils/make-content.js";
-import { ContentStatusService } from "../services/content-status.service.js";
-import type { GenerateContentJobData } from "../types/generate-content-job-data.interface.js";
+import { FakeContentRepository } from "../test-utils/fakes/fake-content-repository.js";
+import { makeContent } from "../test-utils/builders/make-content.js";
+import { ContentStatusService } from "../services/status/content-status.service.js";
+import type { GenerateContentJobData } from "../types/queue/generate-content-job-data.interface.js";
 import { createFailedContentReconciler } from "./failed-content-reconciler.worker.js";
 
 function makeJob(

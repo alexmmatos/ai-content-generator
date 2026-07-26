@@ -1,6 +1,6 @@
 import { createWorkerRuntime } from "./bootstrap/worker-runtime.js";
-import { parseWorkerEnv } from "./lib/parse-worker-env.js";
-import { CONTENT_QUEUE_NAME } from "./lib/queue-name.js";
+import { parseWorkerEnv } from "./lib/env/parse-worker-env.js";
+import { CONTENT_QUEUE_NAME } from "./lib/queue/queue-name.js";
 
 const env = parseWorkerEnv(process.env);
 const runtime = createWorkerRuntime(env);

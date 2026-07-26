@@ -1,4 +1,4 @@
-import type { PendingOutboxPublisher } from "../types/pending-outbox-publisher.interface.js";
+import type { PendingOutboxPublisher } from "../types/outbox/pending-outbox-publisher.interface.js";
 
 interface DispatcherLogger {
   error(message: string, error: unknown): void;

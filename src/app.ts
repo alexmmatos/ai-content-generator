@@ -9,11 +9,11 @@ import {
   type ZodTypeProvider,
 } from "fastify-type-provider-zod";
 import { createContentRoutes } from "./routes/content.routes.js";
-import type { AppDependencies } from "./types/app-dependencies.type.js";
-import { InsufficientCreditsError } from "./services/insufficient-credits.error.js";
-import { ContentNotFoundError } from "./services/content-not-found.error.js";
-import { UserNotFoundError } from "./services/user-not-found.error.js";
-import { RequestIdConflictError } from "./services/request-id-conflict.error.js";
+import type { AppDependencies } from "./types/app/app-dependencies.type.js";
+import { InsufficientCreditsError } from "./services/generation/insufficient-credits.error.js";
+import { ContentNotFoundError } from "./services/status/content-not-found.error.js";
+import { UserNotFoundError } from "./services/generation/user-not-found.error.js";
+import { RequestIdConflictError } from "./services/generation/request-id-conflict.error.js";
 
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;

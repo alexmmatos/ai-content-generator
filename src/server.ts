@@ -1,5 +1,5 @@
 import { createApiRuntime } from "./bootstrap/api-runtime.js";
-import { parseApiEnv } from "./lib/parse-api-env.js";
+import { parseApiEnv } from "./lib/env/parse-api-env.js";
 
 const env = parseApiEnv(process.env);
 const app = createApiRuntime(env);

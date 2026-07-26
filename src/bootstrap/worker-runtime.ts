@@ -1,19 +1,19 @@
-import { createContentQueue } from "../lib/content-queue.js";
-import type { WorkerEnv } from "../types/worker-env.type.js";
-import { createOutboxListener } from "../lib/outbox-listener.js";
+import { createContentQueue } from "../lib/queue/content-queue.js";
+import type { WorkerEnv } from "../types/env/worker-env.type.js";
+import { createOutboxListener } from "../lib/outbox/outbox-listener.js";
 import { prisma } from "../lib/prisma.js";
-import { createRedisProducerConnection } from "../lib/create-redis-producer-connection.js";
-import { createRedisWorkerConnection } from "../lib/create-redis-worker-connection.js";
-import { createS3Client } from "../lib/s3.js";
-import { S3ContentStorage } from "../lib/upload-content-file.js";
+import { createRedisProducerConnection } from "../lib/redis/create-redis-producer-connection.js";
+import { createRedisWorkerConnection } from "../lib/redis/create-redis-worker-connection.js";
+import { createS3Client } from "../lib/storage/s3.js";
+import { S3ContentStorage } from "../lib/storage/upload-content-file.js";
 import { PrismaContentRepository } from "../repositories/content.repository.js";
 import { PrismaOutboxRepository } from "../repositories/outbox.repository.js";
-import { ContentStatusService } from "../services/content-status.service.js";
-import { OutboxPublicationService } from "../services/outbox-publication.service.js";
-import { createContentGenerationWorker } from "../workers/content-generation.worker.js";
+import { ContentStatusService } from "../services/status/content-status.service.js";
+import { OutboxPublicationService } from "../services/outbox/outbox-publication.service.js";
+import { createContentGenerationWorker } from "../workers/content-generation/content-generation.worker.js";
 import { createFailedContentReconciler } from "../workers/failed-content-reconciler.worker.js";
 import { createOutboxDispatcher } from "../workers/outbox-dispatcher.worker.js";
-import { createAiSimulator } from "../workers/simulate-ai-call.js";
+import { createAiSimulator } from "../workers/content-generation/simulate-ai-call.js";
 
 export function createWorkerRuntime(config: WorkerEnv): {
   start(): void;
