@@ -1,19 +1,11 @@
 import type { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
-import {
-  GenerateContentRequestSchema,
-  GenerateContentResponseSchema,
-  ContentIdParamSchema,
-  ContentResponseSchema,
-  CancelContentResponseSchema,
-  ErrorResponseSchema,
-} from "../schemas/content.schema.js";
-import type { ContentGenerationService } from "../services/content-generation.service.js";
-import type { ContentStatusService } from "../services/content-status.service.js";
-
-export interface ContentRoutesDependencies {
-  contentGenerationService: ContentGenerationService;
-  contentStatusService: ContentStatusService;
-}
+import { GenerateContentRequestSchema } from "../schemas/generate-content-request.schema.js";
+import { GenerateContentResponseSchema } from "../schemas/generate-content-response.schema.js";
+import { ContentIdParamSchema } from "../schemas/content-id-param.schema.js";
+import { ContentResponseSchema } from "../schemas/content-response.schema.js";
+import { CancelContentResponseSchema } from "../schemas/cancel-content-response.schema.js";
+import { ErrorResponseSchema } from "../schemas/error-response.schema.js";
+import type { ContentRoutesDependencies } from "../types/content-routes-dependencies.js";
 
 export function createContentRoutes(deps: ContentRoutesDependencies): FastifyPluginAsyncZod {
   return async (app) => {

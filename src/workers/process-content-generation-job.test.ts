@@ -1,7 +1,8 @@
 import { describe, it, expect, vi } from "vitest";
 import { processContentGenerationJob } from "./process-content-generation-job.js";
 import { ContentStatusService } from "../services/content-status.service.js";
-import { FakeContentRepository, makeContent } from "../test-utils/fakes.js";
+import { FakeContentRepository } from "../test-utils/fake-content-repository.js";
+import { makeContent } from "../test-utils/make-content.js";
 
 describe("processContentGenerationJob", () => {
   it("happy path: PENDING -> PROCESSING -> COMPLETED with the uploaded resultUrl", async () => {

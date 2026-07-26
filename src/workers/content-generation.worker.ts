@@ -1,10 +1,10 @@
 import { Worker } from "bullmq";
-import { CONTENT_QUEUE_NAME } from "../lib/queue.js";
+import { CONTENT_QUEUE_NAME } from "../lib/queue-name.js";
 import { redisConnection } from "../lib/redis.js";
 import { uploadContentFile } from "../lib/upload-content-file.js";
 import { PrismaContentRepository } from "../repositories/content.repository.js";
 import { ContentStatusService } from "../services/content-status.service.js";
-import type { GenerateContentJobData } from "../services/content-generation.service.js";
+import type { GenerateContentJobData } from "../types/generate-content-job-data.js";
 import { simulateAiCall } from "./simulate-ai-call.js";
 import { shouldMarkFailed } from "./should-mark-failed.js";
 import { processContentGenerationJob } from "./process-content-generation-job.js";

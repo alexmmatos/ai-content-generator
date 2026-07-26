@@ -1,6 +1,6 @@
 import type { Content, ContentStatus } from "@prisma/client";
-import type { ContentRepository } from "../repositories/content.repository.js";
-import { ContentNotFoundError } from "./errors.js";
+import type { ContentRepository } from "../types/content-repository.js";
+import { ContentNotFoundError } from "./content-not-found.error.js";
 
 const CANCELABLE_STATUSES: ContentStatus[] = ["PENDING", "PROCESSING"];
 

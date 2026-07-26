@@ -1,12 +1,10 @@
 import type { ContentStatus } from "@prisma/client";
 import type { Queue } from "bullmq";
-import type { UserRepository } from "../repositories/user.repository.js";
-import type { ContentRepository } from "../repositories/content.repository.js";
-import { InsufficientCreditsError, UserNotFoundError } from "./errors.js";
-
-export interface GenerateContentJobData {
-  contentId: string;
-}
+import type { UserRepository } from "../types/user-repository.js";
+import type { ContentRepository } from "../types/content-repository.js";
+import type { GenerateContentJobData } from "../types/generate-content-job-data.js";
+import { InsufficientCreditsError } from "./insufficient-credits.error.js";
+import { UserNotFoundError } from "./user-not-found.error.js";
 
 export class ContentGenerationService {
   constructor(

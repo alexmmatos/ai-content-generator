@@ -1,8 +1,7 @@
 import { Queue } from "bullmq";
 import { redisConnection } from "./redis.js";
-import type { GenerateContentJobData } from "../services/content-generation.service.js";
-
-export const CONTENT_QUEUE_NAME = "content-generation";
+import { CONTENT_QUEUE_NAME } from "./queue-name.js";
+import type { GenerateContentJobData } from "../types/generate-content-job-data.js";
 
 export const contentQueue = new Queue<GenerateContentJobData>(CONTENT_QUEUE_NAME, {
   connection: redisConnection,

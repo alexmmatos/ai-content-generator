@@ -3,14 +3,12 @@ import type { Queue } from "bullmq";
 import { buildApp } from "../app.js";
 import { ContentGenerationService } from "../services/content-generation.service.js";
 import { ContentStatusService } from "../services/content-status.service.js";
-import type { GenerateContentJobData } from "../services/content-generation.service.js";
-import {
-  FakeUserRepository,
-  FakeContentRepository,
-  FakeQueue,
-  makeUser,
-  makeContent,
-} from "../test-utils/fakes.js";
+import type { GenerateContentJobData } from "../types/generate-content-job-data.js";
+import { FakeUserRepository } from "../test-utils/fake-user-repository.js";
+import { FakeContentRepository } from "../test-utils/fake-content-repository.js";
+import { FakeQueue } from "../test-utils/fake-queue.js";
+import { makeUser } from "../test-utils/make-user.js";
+import { makeContent } from "../test-utils/make-content.js";
 
 function buildTestApp() {
   const users = new FakeUserRepository();

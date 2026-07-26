@@ -1,10 +1,4 @@
-import type { ContentStatusService } from "../services/content-status.service.js";
-
-export interface ProcessJobDeps {
-  statusService: ContentStatusService;
-  simulateAiCall: (topic: string) => Promise<string>;
-  uploadContentFile: (contentId: string, text: string) => Promise<string>;
-}
+import type { ProcessJobDeps } from "../types/process-job-deps.js";
 
 /** The worker's actual job-processing steps, pulled out of `content-generation.worker.ts`
  *  so they're testable with fakes/stubs — importing that file connects to Redis as a side

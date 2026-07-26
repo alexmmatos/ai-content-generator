@@ -7,14 +7,11 @@ import {
   jsonSchemaTransform,
   type ZodTypeProvider,
 } from "fastify-type-provider-zod";
-import { createContentRoutes, type ContentRoutesDependencies } from "./routes/content.routes.js";
-import {
-  InsufficientCreditsError,
-  ContentNotFoundError,
-  UserNotFoundError,
-} from "./services/errors.js";
-
-export type AppDependencies = ContentRoutesDependencies;
+import { createContentRoutes } from "./routes/content.routes.js";
+import type { AppDependencies } from "./types/app-dependencies.js";
+import { InsufficientCreditsError } from "./services/insufficient-credits.error.js";
+import { ContentNotFoundError } from "./services/content-not-found.error.js";
+import { UserNotFoundError } from "./services/user-not-found.error.js";
 
 export function buildApp(deps: AppDependencies): FastifyInstance {
   const app = Fastify({ logger: true }).withTypeProvider<ZodTypeProvider>();

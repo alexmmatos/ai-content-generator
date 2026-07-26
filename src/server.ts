@@ -1,6 +1,6 @@
 import { env } from "./lib/env.js";
 import { buildApp } from "./app.js";
-import { contentQueue } from "./lib/queue.js";
+import { contentQueue } from "./lib/content-queue.js";
 import { PrismaUserRepository } from "./repositories/user.repository.js";
 import { PrismaContentRepository } from "./repositories/content.repository.js";
 import { ContentGenerationService } from "./services/content-generation.service.js";

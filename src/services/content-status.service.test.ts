@@ -1,7 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { ContentStatusService } from "./content-status.service.js";
-import { ContentNotFoundError } from "./errors.js";
-import { FakeContentRepository, makeContent } from "../test-utils/fakes.js";
+import { ContentNotFoundError } from "./content-not-found.error.js";
+import { FakeContentRepository } from "../test-utils/fake-content-repository.js";
+import { makeContent } from "../test-utils/make-content.js";
 
 function buildService() {
   const contents = new FakeContentRepository();
