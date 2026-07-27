@@ -1,4 +1,4 @@
-# ai-content-generator
+# AI Content Generator
 
 API que gera conteúdo com IA de forma assíncrona: uma requisição enfileira um job, um worker
 processa em background (chamada de IA simulada + upload para S3) e o cliente consulta o
