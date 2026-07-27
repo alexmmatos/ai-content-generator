@@ -1,10 +1,12 @@
+import { LIMITS } from "../../../../shared/config/limits.js";
+
 export function createAiSimulator(options: {
   delayMs?: number;
   failureRate?: number;
   random?: () => number;
 } = {}): (topic: string) => Promise<string> {
-  const delayMs = options.delayMs ?? 5000;
-  const failureRate = options.failureRate ?? 0.2;
+  const delayMs = options.delayMs ?? LIMITS.aiSimulation.delayMs;
+  const failureRate = options.failureRate ?? LIMITS.aiSimulation.defaultFailureRate;
   const random = options.random ?? (() => Math.random());
 
   return async (topic: string): Promise<string> => {

@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { ContentJobQueue } from "../../application/ports/content-job-queue.interface.js";
 import type { OutboxRepository } from "../../../../shared/outbox/outbox-repository.interface.js";
 import type { PendingOutboxPublisher } from "../../../../shared/outbox/pending-outbox-publisher.interface.js";
+import { LIMITS } from "../../../../shared/config/limits.js";
 
 const GenerationPayloadSchema = z.object({
   contentId: z.string().min(1),
@@ -16,7 +17,7 @@ export class OutboxPublicationService implements PendingOutboxPublisher {
     private queue: ContentJobQueue
   ) {}
 
-  async publishPending(limit = 50): Promise<void> {
+  async publishPending(limit: number = LIMITS.outboxPublishing.batchSize): Promise<void> {
     const events = await this.outbox.findPending(limit);
     for (const event of events) {
       await this.publishEvent(event);
@@ -40,9 +41,12 @@ export class OutboxPublicationService implements PendingOutboxPublisher {
         const data = CancellationPayloadSchema.parse(event.payload);
         await this.queue.add("cleanup-content", data, {
           jobId: `cancel-${event.aggregateId}`,
-          attempts: 10,
-          backoff: { type: "exponential", delay: 2000 },
-          removeOnComplete: { age: 86_400, count: 1_000 },
+          attempts: LIMITS.outboxCleanupJob.attempts,
+          backoff: { type: "exponential", delay: LIMITS.outboxCleanupJob.backoffDelayMs },
+          removeOnComplete: {
+            age: LIMITS.outboxCleanupJob.completedRetention.ageSeconds,
+            count: LIMITS.outboxCleanupJob.completedRetention.count,
+          },
           removeOnFail: false,
         });
       } else {

@@ -81,7 +81,7 @@ describe("PrismaGenerationRequestRepository", () => {
       data: INPUT,
     });
     expect(mocks.tx.user.updateMany).toHaveBeenCalledWith({
-      where: { id: "user-1", credits: { gt: 0 } },
+      where: { id: "user-1", credits: { gte: 1 } },
       data: { credits: { decrement: 1 } },
     });
     expect(mocks.tx.outboxEvent.create).toHaveBeenCalledWith({

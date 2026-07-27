@@ -1,6 +1,7 @@
 import { Prisma, type Content } from "@prisma/client";
 import { prisma } from "../../../../shared/db/prisma.js";
 import { OUTBOX_NOTIFY_CHANNEL } from "../../../../shared/outbox/outbox-channel.js";
+import { LIMITS } from "../../../../shared/config/limits.js";
 import { toContentEntity } from "./to-content-entity.js";
 import type { GenerationRequestRepository } from "../../application/ports/generation-request-repository.interface.js";
 import type { CreateGenerationRequestResult } from "../../application/ports/create-generation-request-result.type.js";
@@ -37,8 +38,8 @@ export class PrismaGenerationRequestRepository implements GenerationRequestRepos
         });
 
         const debit = await tx.user.updateMany({
-          where: { id: input.userId, credits: { gt: 0 } },
-          data: { credits: { decrement: 1 } },
+          where: { id: input.userId, credits: { gte: LIMITS.credits.costPerGeneration } },
+          data: { credits: { decrement: LIMITS.credits.costPerGeneration } },
         });
         if (debit.count !== 1) throw new InsufficientCreditsPersistenceError();
 
