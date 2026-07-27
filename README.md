@@ -5,6 +5,15 @@ processa em background (chamada de IA simulada + upload para S3) e o cliente con
 status pelo `contentId`. Construído com Fastify, Prisma (PostgreSQL), BullMQ (Redis) e
 Minio (S3-compatível).
 
+## Swagger
+
+<img width="1874" height="919" alt="image" src="https://github.com/user-attachments/assets/b518f34c-9fab-4102-9936-c14d5ed3851c" />
+<img width="1433" height="866" alt="image" src="https://github.com/user-attachments/assets/eea4eef9-db63-4960-b4bc-717c2d6089d5" />
+<img width="1427" height="448" alt="image" src="https://github.com/user-attachments/assets/2214ed3d-f014-4068-b255-95863d709053" />
+<img width="1436" height="448" alt="image" src="https://github.com/user-attachments/assets/d574e13c-58d1-4e98-b570-e21d8dd9c5d0" />
+
+
+
 ## Como rodar
 
 ```bash
